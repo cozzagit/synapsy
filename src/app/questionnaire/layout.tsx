@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+
+export const metadata: Metadata = {
+  title: "Questionario",
+  description:
+    "Rispondi a poche domande per trovare il professionista più adatto a te.",
+};
 
 export default function QuestionnaireLayout({ children }: { children: ReactNode }) {
   return (

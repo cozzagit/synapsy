@@ -43,6 +43,20 @@ export const metadata: Metadata = {
       "Trova lo psicologo giusto per te con il nostro sistema di matching intelligente.",
     type: "website",
     locale: "it_IT",
+    siteName: "Synapsy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Synapsy — La connessione giusta, al momento giusto",
+    description:
+      "Trova lo psicologo giusto per te con il nostro sistema di matching intelligente.",
+  },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://synapsy.vibecanyon.com"
+  ),
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

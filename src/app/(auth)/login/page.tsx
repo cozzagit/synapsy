@@ -1,15 +1,11 @@
 "use client";
 
-import type { Metadata } from "next";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { signIn } from "@/lib/auth/client";
 import { useFormState } from "@/hooks/use-form";
-
-// Note: export const metadata cannot be used in Client Components.
-// Title is set via the parent layout template: "Accedi | Synapsy"
 
 interface LoginFormValues {
   email: string;
@@ -37,8 +33,11 @@ function validateLogin(values: LoginFormValues): Partial<Record<keyof LoginFormV
   return errors;
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+
   const { values, errors, isSubmitting, setField, setSubmitting, validate } =
     useFormState<LoginFormValues>(INITIAL_VALUES);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,7 +55,7 @@ export default function LoginPage() {
       const result = await signIn.email({
         email: values.email,
         password: values.password,
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrl || "/dashboard",
       });
 
       if (result.error) {
@@ -64,7 +63,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(callbackUrl || "/dashboard");
     } catch {
       setGlobalError(
         "Si è verificato un errore. Riprova tra qualche istante.",
@@ -233,5 +232,13 @@ export default function LoginPage() {
         </p>
       </div>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

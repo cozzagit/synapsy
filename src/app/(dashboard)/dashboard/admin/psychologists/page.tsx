@@ -11,8 +11,10 @@ import {
   CheckCircle2,
   XCircle,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { growthStages } from "@/lib/utils/labels";
+import { useSession } from "@/lib/auth/client";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -168,20 +170,30 @@ function ScoreBar({ score }: { score: number }) {
 // ─── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AdminPsychologistsPage() {
+  const { data: session, isPending } = useSession();
+  const role = (session?.user as any)?.role;
+
   const [psychologists, setPsychologists] = useState<PsychologistRow[]>(MOCK_PSYCHOLOGISTS);
   const [filter, setFilter] = useState<VerifyFilter>("all");
   const [search, setSearch] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [isAdmin] = useState(true);
 
-  if (!isAdmin) {
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 size={32} className="text-text-secondary animate-spin" />
+      </div>
+    );
+  }
+
+  if (role !== "admin") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <ShieldAlert size={48} className="text-text-secondary mx-auto mb-4" />
           <h2 className="text-xl font-heading font-bold text-text mb-2">Accesso negato</h2>
           <p className="text-sm font-body text-text-secondary">
-            Non hai i permessi per accedere a questa sezione.
+            Solo gli amministratori possono accedere a questa sezione.
           </p>
         </div>
       </div>

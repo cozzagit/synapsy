@@ -45,10 +45,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#faq"
+                  href="/questionnaire"
                   className="text-sm text-text-secondary transition-colors hover:text-primary-600"
                 >
-                  Domande frequenti
+                  Inizia il questionario
                 </Link>
               </li>
             </ul>
@@ -70,7 +70,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="#come-funziona-psicologi"
+                  href="/professionisti"
                   className="text-sm text-text-secondary transition-colors hover:text-primary-600"
                 >
                   Entra nella rete

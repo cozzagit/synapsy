@@ -344,6 +344,7 @@ export default function UserDashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scheduleNotice, setScheduleNotice] = useState(false);
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -367,8 +368,9 @@ export default function UserDashboardPage() {
   const history = dashboardData?.history ?? [];
   const userName = dashboardData?.userName ?? "";
 
-  function handleScheduleCall(matchSelectionId: string) {
-    router.push(`/scheduling/${matchSelectionId}`);
+  // TODO: replace with real scheduling flow when /scheduling is implemented
+  function handleScheduleCall(_matchSelectionId: string) {
+    setScheduleNotice(true);
   }
 
   function handleOpenQuestionnaire(matchSelectionId: string) {
@@ -415,6 +417,32 @@ export default function UserDashboardPage() {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Schedule notice banner */}
+        {scheduleNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 bg-primary-50 border border-primary-200 rounded-2xl p-5"
+          >
+            <PhoneCall size={18} className="text-primary-600 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-body font-semibold text-primary-800">
+                Funzione in arrivo
+              </p>
+              <p className="text-sm font-body text-primary-700 mt-0.5">
+                La programmazione della call sarà disponibile a breve.
+              </p>
+            </div>
+            <button
+              onClick={() => setScheduleNotice(false)}
+              className="text-primary-400 hover:text-primary-600 transition-colors"
+              aria-label="Chiudi"
+            >
+              <AlertCircleIcon size={16} />
+            </button>
+          </motion.div>
         )}
 
         {loading ? (

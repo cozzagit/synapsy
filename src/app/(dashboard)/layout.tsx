@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Inbox,
+  FolderOpen,
   Users,
   Coins,
   UserCircle,
-  Settings,
+  ClipboardList,
+  Stethoscope,
+  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   Sprout,
@@ -17,10 +19,12 @@ import {
   Leaf,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils/cn";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useSession } from "@/lib/auth/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,15 +37,28 @@ interface NavItem {
 }
 
 // ---------------------------------------------------------------------------
-// Mock user — replace with real auth data
+// Nav item arrays per role
 // ---------------------------------------------------------------------------
 
-const MOCK_USER = {
-  name: "Dott.ssa Marta Ferretti",
-  avatarInitials: "MF",
-  growthStage: "Esploratore",
-  growthStageIcon: Sprout,
-};
+const PSYCHOLOGIST_NAV: NavItem[] = [
+  { label: "Panoramica", href: "/dashboard/psychologist", icon: LayoutDashboard },
+  { label: "Casi in arrivo", href: "/dashboard/psychologist/cases", icon: FolderOpen },
+  { label: "I miei pazienti", href: "/dashboard/psychologist/patients", icon: Users },
+  { label: "Crediti", href: "/dashboard/psychologist/credits", icon: Coins },
+  { label: "Profilo", href: "/dashboard/psychologist/profile", icon: UserCircle },
+];
+
+const USER_NAV: NavItem[] = [
+  { label: "La mia area", href: "/dashboard/user", icon: LayoutDashboard },
+  { label: "Questionario", href: "/questionnaire", icon: ClipboardList },
+];
+
+const ADMIN_NAV: NavItem[] = [
+  { label: "Panoramica", href: "/dashboard/admin", icon: LayoutDashboard },
+  { label: "Psicologi", href: "/dashboard/admin/psychologists", icon: Stethoscope },
+  { label: "Utenti", href: "/dashboard/admin/users", icon: Users },
+  { label: "Discrepanze", href: "/dashboard/admin/discrepancies", icon: AlertTriangle },
+];
 
 const GROWTH_STAGE_CONFIG: Record<string, { icon: React.ComponentType<{ size?: number; className?: string }>; bg: string; text: string }> = {
   Esploratore: { icon: Sprout, bg: "bg-primary-100", text: "text-primary-700" },
@@ -50,17 +67,62 @@ const GROWTH_STAGE_CONFIG: Record<string, { icon: React.ComponentType<{ size?: n
 };
 
 // ---------------------------------------------------------------------------
-// Nav items
+// Helpers
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard/psychologist", label: "Panoramica", icon: LayoutDashboard },
-  { href: "/dashboard/psychologist/cases", label: "Casi in arrivo", icon: Inbox },
-  { href: "/dashboard/psychologist/patients", label: "I miei pazienti", icon: Users },
-  { href: "/dashboard/psychologist/credits", label: "Crediti", icon: Coins },
-  { href: "/dashboard/psychologist/profile", label: "Profilo", icon: UserCircle },
-  { href: "/dashboard/psychologist/settings", label: "Impostazioni", icon: Settings },
-];
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getRoleLabel(role: string): string {
+  if (role === "admin") return "Amministratore";
+  if (role === "psychologist") return "Professionista";
+  return "Esploratore";
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton sidebar
+// ---------------------------------------------------------------------------
+
+function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
+  return (
+    <aside
+      className={cn(
+        "hidden md:flex flex-col h-screen bg-surface border-r border-border sticky top-0 transition-all duration-300 ease-in-out shrink-0",
+        collapsed ? "w-[68px]" : "w-[240px]"
+      )}
+    >
+      <div className={cn("flex items-center gap-3 px-4 py-5 border-b border-border", collapsed && "justify-center px-2")}>
+        <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center shrink-0">
+          <Sprout size={16} className="text-white" />
+        </div>
+        {!collapsed && <div className="h-4 w-20 bg-bg-subtle rounded animate-pulse" />}
+      </div>
+      <div className={cn("flex items-center gap-3 px-4 py-4 border-b border-border", collapsed && "justify-center px-2")}>
+        <div className="w-9 h-9 rounded-full bg-bg-subtle animate-pulse shrink-0" />
+        {!collapsed && (
+          <div className="space-y-1.5">
+            <div className="h-3 w-28 bg-bg-subtle rounded animate-pulse" />
+            <div className="h-3 w-16 bg-bg-subtle rounded animate-pulse" />
+          </div>
+        )}
+      </div>
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <ul className="flex flex-col gap-0.5">
+          {[1, 2, 3, 4].map((i) => (
+            <li key={i} className={cn("h-10 rounded-xl bg-bg-subtle animate-pulse", collapsed ? "mx-1" : "mx-0")} />
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Sidebar
@@ -74,7 +136,33 @@ function Sidebar({
   onToggleCollapse: () => void;
 }) {
   const pathname = usePathname();
-  const stageConfig = GROWTH_STAGE_CONFIG[MOCK_USER.growthStage] ?? GROWTH_STAGE_CONFIG["Esploratore"];
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return <SidebarSkeleton collapsed={collapsed} />;
+  }
+
+  const role = (session?.user as any)?.role || "user";
+  const userName = session?.user?.name || session?.user?.email || null;
+  const initials = getInitials(userName);
+
+  const navItems =
+    role === "admin"
+      ? ADMIN_NAV
+      : role === "psychologist"
+      ? PSYCHOLOGIST_NAV
+      : USER_NAV;
+
+  // For active detection: match first item of each nav exactly, rest by prefix
+  const firstHref = navItems[0]?.href ?? "";
+
+  const stageLabel = getRoleLabel(role);
+  const stageConfig =
+    role === "admin"
+      ? { icon: ShieldCheck, bg: "bg-accent-100", text: "text-accent-700" }
+      : role === "psychologist"
+      ? (GROWTH_STAGE_CONFIG["Crescita"] ?? GROWTH_STAGE_CONFIG["Esploratore"])
+      : (GROWTH_STAGE_CONFIG["Esploratore"]);
   const StageIcon = stageConfig.icon;
 
   return (
@@ -108,13 +196,13 @@ function Sidebar({
       >
         <div className="w-9 h-9 rounded-full bg-primary-200 flex items-center justify-center shrink-0">
           <span className="text-xs font-heading font-bold text-primary-700">
-            {MOCK_USER.avatarInitials}
+            {initials}
           </span>
         </div>
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-sm font-body font-semibold text-text truncate leading-tight">
-              {MOCK_USER.name}
+              {userName ?? "Utente"}
             </p>
             <span
               className={cn(
@@ -124,7 +212,7 @@ function Sidebar({
               )}
             >
               <StageIcon size={10} />
-              {MOCK_USER.growthStage}
+              {stageLabel}
             </span>
           </div>
         )}
@@ -132,10 +220,20 @@ function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
+        {role === "admin" && !collapsed && (
+          <p className="text-[10px] font-body font-semibold text-text-secondary uppercase tracking-widest px-3 pb-1.5 pt-0.5">
+            Admin Tools
+          </p>
+        )}
+        {role === "admin" && collapsed && (
+          <div className="flex items-center justify-center pb-1.5 pt-0.5">
+            <ShieldCheck size={12} className="text-text-secondary" />
+          </div>
+        )}
         <ul className="flex flex-col gap-0.5">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive =
-              item.href === "/dashboard/psychologist"
+              item.href === firstHref
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -194,14 +292,25 @@ function Sidebar({
 
 function MobileNav() {
   const pathname = usePathname();
-  const mobileItems = NAV_ITEMS.slice(0, 5); // show first 5
+  const { data: session } = useSession();
+
+  const role = (session?.user as any)?.role || "user";
+  const navItems =
+    role === "admin"
+      ? ADMIN_NAV
+      : role === "psychologist"
+      ? PSYCHOLOGIST_NAV
+      : USER_NAV;
+
+  const mobileItems = navItems.slice(0, 5);
+  const firstHref = navItems[0]?.href ?? "";
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border">
       <ul className="flex">
         {mobileItems.map((item) => {
           const isActive =
-            item.href === "/dashboard/psychologist"
+            item.href === firstHref
               ? pathname === item.href
               : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -233,12 +342,34 @@ function MobileNav() {
 function MobileTopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const currentItem = NAV_ITEMS.find((item) =>
-    item.href === "/dashboard/psychologist"
+  const { data: session } = useSession();
+
+  const role = (session?.user as any)?.role || "user";
+  const userName = session?.user?.name || session?.user?.email || null;
+  const initials = getInitials(userName);
+
+  const navItems =
+    role === "admin"
+      ? ADMIN_NAV
+      : role === "psychologist"
+      ? PSYCHOLOGIST_NAV
+      : USER_NAV;
+
+  const firstHref = navItems[0]?.href ?? "";
+
+  const currentItem = navItems.find((item) =>
+    item.href === firstHref
       ? pathname === item.href
       : pathname.startsWith(item.href)
   );
-  const stageConfig = GROWTH_STAGE_CONFIG[MOCK_USER.growthStage] ?? GROWTH_STAGE_CONFIG["Esploratore"];
+
+  const stageLabel = getRoleLabel(role);
+  const stageConfig =
+    role === "admin"
+      ? { icon: ShieldCheck, bg: "bg-accent-100", text: "text-accent-700" }
+      : role === "psychologist"
+      ? (GROWTH_STAGE_CONFIG["Crescita"] ?? GROWTH_STAGE_CONFIG["Esploratore"])
+      : (GROWTH_STAGE_CONFIG["Esploratore"]);
   const StageIcon = stageConfig.icon;
 
   return (
@@ -259,12 +390,12 @@ function MobileTopBar() {
             )}
           >
             <StageIcon size={10} />
-            {MOCK_USER.growthStage}
+            {stageLabel}
           </span>
           <NotificationBell />
           <div className="w-8 h-8 rounded-full bg-primary-200 flex items-center justify-center">
             <span className="text-xs font-heading font-bold text-primary-700">
-              {MOCK_USER.avatarInitials}
+              {initials}
             </span>
           </div>
           <button
@@ -288,9 +419,9 @@ function MobileTopBar() {
             className="md:hidden fixed top-[57px] left-0 right-0 z-20 bg-surface border-b border-border shadow-md"
           >
             <nav className="py-2 px-2">
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive =
-                  item.href === "/dashboard/psychologist"
+                  item.href === firstHref
                     ? pathname === item.href
                     : pathname.startsWith(item.href);
                 const Icon = item.icon;
@@ -325,6 +456,20 @@ function MobileTopBar() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { data: session } = useSession();
+
+  const role = (session?.user as any)?.role || "user";
+  const userName = session?.user?.name || session?.user?.email || null;
+
+  const stageLabel = getRoleLabel(role);
+  const stageConfig =
+    role === "admin"
+      ? { icon: ShieldCheck, bg: "bg-accent-100", text: "text-accent-700" }
+      : role === "psychologist"
+      ? (GROWTH_STAGE_CONFIG["Crescita"] ?? GROWTH_STAGE_CONFIG["Esploratore"])
+      : (GROWTH_STAGE_CONFIG["Esploratore"]);
+  const StageIcon = stageConfig.icon;
+  const initials = getInitials(userName);
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -343,26 +488,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="hidden md:flex items-center justify-between px-6 py-4 bg-surface border-b border-border sticky top-0 z-20">
           <div />
           <div className="flex items-center gap-3">
-            {(() => {
-              const stageConfig = GROWTH_STAGE_CONFIG[MOCK_USER.growthStage] ?? GROWTH_STAGE_CONFIG["Esploratore"];
-              const StageIcon = stageConfig.icon;
-              return (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full",
-                    stageConfig.bg,
-                    stageConfig.text
-                  )}
-                >
-                  <StageIcon size={12} />
-                  {MOCK_USER.growthStage}
-                </span>
-              );
-            })()}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full",
+                stageConfig.bg,
+                stageConfig.text
+              )}
+            >
+              <StageIcon size={12} />
+              {stageLabel}
+            </span>
             <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-primary-200 flex items-center justify-center">
               <span className="text-sm font-heading font-bold text-primary-700">
-                {MOCK_USER.avatarInitials}
+                {initials}
               </span>
             </div>
           </div>
