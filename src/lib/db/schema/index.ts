@@ -15,3 +15,6 @@ export * from './verification';
 
 // Gamification: badges, ranking history
 export * from './gamification';
+
+// In-app notifications
+export * from './notifications';

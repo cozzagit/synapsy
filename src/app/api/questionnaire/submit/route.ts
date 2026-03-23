@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
+import { getServerSession } from "@/lib/auth/session";
 import type { QuestionnaireResponse } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Devi effettuare il login per continuare" } },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       responses,
@@ -51,13 +61,11 @@ export async function POST(request: NextRequest) {
 
     const preferredGender = genderMap[responses.preferredGender] ?? "no_preference";
 
-    // Create case in database
-    // Note: userId would come from auth session in production
-    // For now, we create a case without userId (will be linked later)
+    // Create case in database, linked to the authenticated user
     const [newCase] = await db
       .insert(cases)
       .values({
-        userId: "00000000-0000-0000-0000-000000000000", // placeholder — will link to auth user
+        userId: session.user.id,
         status: "pending",
         questionnaireData: responses as unknown as Record<string, unknown>,
         primaryProblem: responses.primaryProblems[0],

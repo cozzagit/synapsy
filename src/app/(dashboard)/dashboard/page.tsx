@@ -1,22 +1,22 @@
 import { redirect } from "next/navigation";
+import { getServerSession } from "@/lib/auth/session";
 
 /**
- * Dashboard index — redirects to the appropriate role-specific dashboard.
- * In production, replace the hardcoded role with real auth session data.
+ * Dashboard index — reads the real auth session and redirects to the
+ * appropriate role-specific sub-dashboard.
  */
-export default function DashboardPage() {
-  // TODO: read user role from auth session
-  // const session = await getSession();
-  // const role = session?.user?.role ?? "psychologist";
+export default async function DashboardPage() {
+  const session = await getServerSession();
 
-  const role = "psychologist"; // mock
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const role = (session.user as { role?: string }).role ?? "user";
 
   if (role === "psychologist") {
     redirect("/dashboard/psychologist");
   }
 
-  // Future: patient role
-  // if (role === "patient") redirect("/dashboard/patient");
-
-  redirect("/dashboard/psychologist");
+  redirect("/dashboard/user");
 }

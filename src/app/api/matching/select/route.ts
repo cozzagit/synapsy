@@ -7,6 +7,7 @@ import {
   psychologistProfiles,
 } from "@/lib/db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
+import { getServerSession } from "@/lib/auth/session";
 import {
   createSelectionFeePayment,
   awardReferralCredit,
@@ -18,13 +19,45 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { caseId, candidacyId, userId, psychologistProfileId } =
+    const session = await getServerSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Non autenticato" } },
+        { status: 401 }
+      );
+    }
+
+    // userId always comes from the authenticated session — never trusted from the body
+    const userId = session.user.id;
+
+    const { caseId, candidacyId, psychologistProfileId } =
       await request.json();
 
-    if (!caseId || !candidacyId || !userId || !psychologistProfileId) {
+    if (!caseId || !candidacyId || !psychologistProfileId) {
       return NextResponse.json(
         { error: { code: "VALIDATION_ERROR", message: "Dati incompleti" } },
         { status: 400 }
+      );
+    }
+
+    // Verify the case belongs to this user
+    const caseResult = await db.query.cases.findFirst({
+      where: eq(cases.id, caseId),
+    });
+
+    if (!caseResult) {
+      return NextResponse.json(
+        { error: { code: "NOT_FOUND", message: "Caso non trovato" } },
+        { status: 404 }
+      );
+    }
+
+    const userRole = (session.user as { role?: string }).role;
+    if (caseResult.userId !== userId && userRole !== "admin") {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "Non hai accesso a questo caso" } },
+        { status: 403 }
       );
     }
 
@@ -102,13 +135,9 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(psychologistProfiles.id, psychologistProfileId));
 
-    // Check if referral credit should be awarded
-    const caseResult = await db.query.cases.findFirst({
-      where: eq(cases.id, caseId),
-    });
-
+    // Check if referral credit should be awarded (reuse already-fetched case)
     if (
-      caseResult?.referralPsychologistId &&
+      caseResult.referralPsychologistId &&
       caseResult.referralPsychologistId !== psychologistProfileId
     ) {
       await awardReferralCredit(

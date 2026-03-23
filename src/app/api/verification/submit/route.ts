@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { postCallQuestionnaires, matchSelections } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getServerSession } from '@/lib/auth/session';
 import { detectAndHandleDiscrepancies, fetchBothQuestionnaires } from '@/lib/verification';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -89,6 +90,15 @@ function validateBody(body: unknown): { valid: true; data: SubmitVerificationBod
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Non autenticato' } },
+        { status: 401 },
+      );
+    }
+
     const rawBody = await request.json();
     const validation = validateBody(rawBody);
 
@@ -102,13 +112,15 @@ export async function POST(request: NextRequest) {
     const {
       matchSelectionId,
       respondentType,
-      respondentId,
       callHappened,
       estimatedDurationMinutes,
       willContinue,
       satisfactionRating,
       notes,
     } = validation.data;
+
+    // Always derive respondentId from the authenticated session — never trust the request body
+    const respondentId = session.user.id;
 
     // Verify matchSelection exists
     const [match] = await db
