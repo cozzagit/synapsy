@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Coins, Info, Clock, CheckCircle2, XCircle, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Coins, Info, Clock, CheckCircle2, XCircle, Zap, AlertCircle } from "lucide-react";
 import { motion } from "motion/react";
 
 // ---------------------------------------------------------------------------
-// Types & mock data
+// Types
 // ---------------------------------------------------------------------------
 
 type CreditStatus = "available" | "used" | "expired";
@@ -13,73 +13,20 @@ type CreditOrigin = "selection_fee" | "bonus" | "referral" | "milestone";
 
 interface CreditRecord {
   id: string;
-  earnedAt: Date;
-  expiresAt: Date | null;
+  earnedAt: string | Date;
+  expiresAt: string | Date | null;
   origin: CreditOrigin;
   originLabel: string;
   status: CreditStatus;
   usedFor: string | null;
-  usedAt: Date | null;
-  amount: number; // number of credits (usually 1)
+  usedAt: string | Date | null;
+  amount: number;
 }
 
-const MOCK_CREDITS: CreditRecord[] = [
-  {
-    id: "cr-1",
-    earnedAt: new Date("2025-02-10"),
-    expiresAt: new Date("2025-05-10"),
-    origin: "selection_fee",
-    originLabel: "Pagamento selezione",
-    status: "available",
-    usedFor: null,
-    usedAt: null,
-    amount: 1,
-  },
-  {
-    id: "cr-2",
-    earnedAt: new Date("2025-01-25"),
-    expiresAt: new Date("2025-04-25"),
-    origin: "selection_fee",
-    originLabel: "Pagamento selezione",
-    status: "available",
-    usedFor: null,
-    usedAt: null,
-    amount: 1,
-  },
-  {
-    id: "cr-3",
-    earnedAt: new Date("2025-03-01"),
-    expiresAt: new Date("2025-06-01"),
-    origin: "milestone",
-    originLabel: "Badge: Ascoltatore Empatico",
-    status: "available",
-    usedFor: null,
-    usedAt: null,
-    amount: 1,
-  },
-  {
-    id: "cr-4",
-    earnedAt: new Date("2024-12-15"),
-    expiresAt: null,
-    origin: "referral",
-    originLabel: "Referral — Dott. Bianchi",
-    status: "used",
-    usedFor: "Candidatura caso MR-2025-01",
-    usedAt: new Date("2025-01-10"),
-    amount: 1,
-  },
-  {
-    id: "cr-5",
-    earnedAt: new Date("2024-11-01"),
-    expiresAt: new Date("2025-02-01"),
-    origin: "bonus",
-    originLabel: "Bonus benvenuto",
-    status: "expired",
-    usedFor: null,
-    usedAt: null,
-    amount: 1,
-  },
-];
+interface CreditsData {
+  available: number;
+  history: CreditRecord[];
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -104,6 +51,35 @@ function formatDate(date: Date): string {
 
 function daysUntil(date: Date): number {
   return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton
+// ---------------------------------------------------------------------------
+
+function CreditsSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Big count card skeleton */}
+      <div className="animate-pulse bg-bg-subtle rounded-2xl h-36" />
+      {/* Table skeleton */}
+      <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border">
+          <div className="animate-pulse bg-bg-subtle h-5 w-32 rounded" />
+        </div>
+        <div className="flex flex-col divide-y divide-border">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="px-5 py-4 flex gap-4">
+              <div className="animate-pulse bg-bg-subtle h-4 w-28 rounded flex-1" />
+              <div className="animate-pulse bg-bg-subtle h-4 w-24 rounded flex-1" />
+              <div className="animate-pulse bg-bg-subtle h-4 w-20 rounded flex-1" />
+              <div className="animate-pulse bg-bg-subtle h-4 w-32 rounded flex-1" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -194,9 +170,34 @@ function HowCreditsWork() {
 // ---------------------------------------------------------------------------
 
 export default function CreditsPage() {
-  const available = MOCK_CREDITS.filter((c) => c.status === "available");
-  const soonExpiring = available.filter(
-    (c) => c.expiresAt && daysUntil(c.expiresAt) <= 14
+  const [creditsData, setCreditsData] = useState<CreditsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchCredits() {
+    try {
+      setError(null);
+      const res = await fetch("/api/credits");
+      if (!res.ok) throw new Error(`Errore ${res.status}`);
+      const json = await res.json();
+      setCreditsData(json);
+    } catch {
+      setError("Non è stato possibile caricare i crediti. Riprova tra poco.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchCredits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const history = creditsData?.history ?? [];
+  const availableCount = creditsData?.available ?? 0;
+
+  const soonExpiring = history.filter(
+    (c) => c.status === "available" && c.expiresAt && daysUntil(new Date(c.expiresAt)) <= 14
   );
 
   return (
@@ -209,136 +210,175 @@ export default function CreditsPage() {
         </p>
       </div>
 
-      {/* Big count card */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 mb-6 text-white shadow-md relative overflow-hidden"
-      >
-        {/* Decorative circles */}
-        <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
-        <div className="absolute -right-4 -bottom-12 w-48 h-48 rounded-full bg-white/5" />
-
-        <div className="relative z-10 flex items-end justify-between">
+      {/* Error state */}
+      {error && (
+        <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-2xl p-5 mb-6">
+          <AlertCircle size={18} className="text-accent-600 mt-0.5 shrink-0" />
           <div>
-            <p className="text-primary-100 text-sm font-body mb-2">Crediti disponibili</p>
-            <div className="flex items-end gap-3">
-              <span className="text-7xl font-heading font-bold leading-none">
-                {available.length}
-              </span>
-              <div className="mb-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Coins size={16} className="text-primary-200" />
-                  <span className="text-primary-100 text-sm font-body">
-                    {available.length === 1 ? "credito" : "crediti"}
-                  </span>
-                </div>
-                {soonExpiring.length > 0 && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
-                    <Clock size={11} />
-                    {soonExpiring.length} in scadenza presto
-                  </span>
-                )}
-              </div>
-            </div>
+            <p className="text-sm font-body font-semibold text-accent-800">Errore nel caricamento</p>
+            <p className="text-sm font-body text-accent-700 mt-0.5">{error}</p>
+            <button
+              onClick={fetchCredits}
+              className="mt-2 text-xs font-body font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+            >
+              Riprova
+            </button>
           </div>
-          <Coins size={56} className="text-white/20" />
         </div>
-      </motion.div>
-
-      {/* Expiring warning */}
-      {soonExpiring.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-xl px-4 py-3 mb-6"
-        >
-          <Clock size={16} className="text-accent-600 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-body font-semibold text-accent-800">
-              {soonExpiring.length} credito{soonExpiring.length > 1 ? "i" : ""} in scadenza entro 14 giorni
-            </p>
-            <p className="text-xs font-body text-accent-700 mt-0.5">
-              Usali per candidarti a nuovi casi prima che scadano.
-            </p>
-          </div>
-        </motion.div>
       )}
 
-      {/* How credits work */}
-      <div className="mb-6">
-        <HowCreditsWork />
-      </div>
+      {loading ? (
+        <CreditsSkeleton />
+      ) : !error && (
+        <>
+          {/* Big count card */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 mb-6 text-white shadow-md relative overflow-hidden"
+          >
+            {/* Decorative circles */}
+            <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
+            <div className="absolute -right-4 -bottom-12 w-48 h-48 rounded-full bg-white/5" />
 
-      {/* Credits history */}
-      <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-base font-heading font-semibold text-text">Storico crediti</h2>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm font-body">
-            <thead>
-              <tr className="border-b border-border">
-                {["Data", "Origine", "Stato", "Usato per"].map((header) => (
-                  <th
-                    key={header}
-                    className="px-5 py-3 text-left text-xs font-semibold text-text-tertiary uppercase tracking-wide"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_CREDITS.map((credit, index) => {
-                const status = statusConfig[credit.status];
-                const StatusIcon = status.icon;
-                const orig = originConfig[credit.origin];
-
-                return (
-                  <motion.tr
-                    key={credit.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="border-b border-border last:border-0 hover:bg-bg-subtle transition-colors"
-                  >
-                    <td className="px-5 py-4 text-text-secondary whitespace-nowrap">
-                      <div>{formatDate(credit.earnedAt)}</div>
-                      {credit.expiresAt && credit.status === "available" && (
-                        <div className="text-xs text-text-tertiary mt-0.5 flex items-center gap-1">
-                          <Clock size={10} />
-                          Scade {formatDate(credit.expiresAt)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${orig.bg} ${orig.color}`}>
-                        {credit.originLabel}
+            <div className="relative z-10 flex items-end justify-between">
+              <div>
+                <p className="text-primary-100 text-sm font-body mb-2">Crediti disponibili</p>
+                <div className="flex items-end gap-3">
+                  <span className="text-7xl font-heading font-bold leading-none">
+                    {availableCount}
+                  </span>
+                  <div className="mb-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Coins size={16} className="text-primary-200" />
+                      <span className="text-primary-100 text-sm font-body">
+                        {availableCount === 1 ? "credito" : "crediti"}
                       </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.color}`}>
-                        <StatusIcon size={11} />
-                        {status.label}
+                    </div>
+                    {soonExpiring.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">
+                        <Clock size={11} />
+                        {soonExpiring.length} in scadenza presto
                       </span>
-                    </td>
-                    <td className="px-5 py-4 text-text-secondary text-xs">
-                      {credit.usedFor ?? (credit.status === "available" ? "—" : "Non utilizzato")}
-                      {credit.usedAt && (
-                        <div className="text-text-tertiary mt-0.5">{formatDate(credit.usedAt)}</div>
-                      )}
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Coins size={56} className="text-white/20" />
+            </div>
+          </motion.div>
+
+          {/* Expiring warning */}
+          {soonExpiring.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-xl px-4 py-3 mb-6"
+            >
+              <Clock size={16} className="text-accent-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-body font-semibold text-accent-800">
+                  {soonExpiring.length} credito{soonExpiring.length > 1 ? "i" : ""} in scadenza entro 14 giorni
+                </p>
+                <p className="text-xs font-body text-accent-700 mt-0.5">
+                  Usali per candidarti a nuovi casi prima che scadano.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* How credits work */}
+          <div className="mb-6">
+            <HowCreditsWork />
+          </div>
+
+          {/* Credits history */}
+          <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="text-base font-heading font-semibold text-text">Storico crediti</h2>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                <div className="w-14 h-14 rounded-2xl bg-bg-subtle flex items-center justify-center mb-3">
+                  <Coins size={24} className="text-text-tertiary" />
+                </div>
+                <p className="text-sm font-body font-medium text-text-secondary">
+                  Nessun credito ancora
+                </p>
+                <p className="text-xs font-body text-text-tertiary mt-1">
+                  I tuoi crediti appariranno qui dopo la prima candidatura
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm font-body">
+                  <thead>
+                    <tr className="border-b border-border">
+                      {["Data", "Origine", "Stato", "Usato per"].map((header) => (
+                        <th
+                          key={header}
+                          className="px-5 py-3 text-left text-xs font-semibold text-text-tertiary uppercase tracking-wide"
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((credit, index) => {
+                      const status = statusConfig[credit.status];
+                      const StatusIcon = status.icon;
+                      const orig = originConfig[credit.origin] ?? originConfig.bonus;
+                      const earnedAt = new Date(credit.earnedAt);
+                      const expiresAt = credit.expiresAt ? new Date(credit.expiresAt) : null;
+                      const usedAt = credit.usedAt ? new Date(credit.usedAt) : null;
+
+                      return (
+                        <motion.tr
+                          key={credit.id}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="border-b border-border last:border-0 hover:bg-bg-subtle transition-colors"
+                        >
+                          <td className="px-5 py-4 text-text-secondary whitespace-nowrap">
+                            <div>{formatDate(earnedAt)}</div>
+                            {expiresAt && credit.status === "available" && (
+                              <div className="text-xs text-text-tertiary mt-0.5 flex items-center gap-1">
+                                <Clock size={10} />
+                                Scade {formatDate(expiresAt)}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex text-xs font-medium px-2 py-0.5 rounded-full ${orig.bg} ${orig.color}`}>
+                              {credit.originLabel}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.color}`}>
+                              <StatusIcon size={11} />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-text-secondary text-xs">
+                            {credit.usedFor ?? (credit.status === "available" ? "—" : "Non utilizzato")}
+                            {usedAt && (
+                              <div className="text-text-tertiary mt-0.5">{formatDate(usedAt)}</div>
+                            )}
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -10,6 +10,7 @@ import {
   Sprout,
   ArrowRight,
   Inbox,
+  AlertCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -17,8 +18,17 @@ import { CaseCard, type CaseCardData } from "@/components/dashboard/case-card";
 import { ActivityTimeline, type ActivityEvent } from "@/components/dashboard/activity-timeline";
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Types
 // ---------------------------------------------------------------------------
+
+interface DashboardStats {
+  totalPatients: number;
+  revenue: number;
+  availableCredits: number;
+  continuityRate: number;
+  revenueTrend?: string;
+  patientsTrend?: string;
+}
 
 interface GrowthStageData {
   name: string;
@@ -28,83 +38,61 @@ interface GrowthStageData {
   metrics: Array<{ label: string; value: string }>;
 }
 
-const MOCK_GROWTH: GrowthStageData = {
-  name: "Esploratore",
-  description: "Stai costruendo la tua reputazione sulla piattaforma",
-  progressPercent: 62,
-  nextStage: "In Crescita",
-  metrics: [
-    { label: "Pazienti acquisiti", value: "4" },
-    { label: "Tasso di continuità", value: "75%" },
-    { label: "Valutazione media", value: "4.8 ★" },
-    { label: "Candidature accettate", value: "6" },
-  ],
-};
+interface PsychologistProfile {
+  firstName: string;
+  lastName: string;
+  growthStage?: GrowthStageData;
+}
 
-const MOCK_INCOMING_CASES: CaseCardData[] = [
-  {
-    id: "case-1",
-    anonymousDescription:
-      "Persona adulta, 28 anni, segnala difficoltà nella gestione dell'ansia in contesti lavorativi e sociali. Riferisce episodi di attacchi di panico nelle ultime 3 settimane.",
-    primaryProblem: "Ansia e attacchi di panico",
-    intensity: 4,
-    modality: "online",
-    compatibilityScore: 91,
-    postedAt: new Date(Date.now() - 1000 * 60 * 45),
-    keyAttributes: ["Lavoro", "Relazioni sociali", "Urgenza moderata"],
-    status: "pending",
-  },
-  {
-    id: "case-2",
-    anonymousDescription:
-      "Persona di 35 anni che attraversa un periodo di bassa autostima e difficoltà nelle relazioni intime. Ha già avuto esperienze di terapia in passato.",
-    primaryProblem: "Autostima e relazioni",
-    intensity: 3,
-    modality: "ibrido",
-    compatibilityScore: 84,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    keyAttributes: ["Esperienza terapeutica", "Relazioni", "Adulto"],
-    status: "pending",
-  },
-];
+interface DashboardData {
+  stats: DashboardStats;
+  pendingCases: CaseCardData[];
+  profile: PsychologistProfile;
+  recentActivity?: ActivityEvent[];
+}
 
-const MOCK_ACTIVITY: ActivityEvent[] = [
-  {
-    id: "act-1",
-    type: "new_match",
-    title: "Nuovo match confermato",
-    description: "Il paziente M.R. ha accettato la tua candidatura",
-    timestamp: new Date(Date.now() - 1000 * 60 * 90),
-  },
-  {
-    id: "act-2",
-    type: "payment",
-    title: "Pagamento ricevuto",
-    description: "Quota di continuità — €120,00",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-  },
-  {
-    id: "act-3",
-    type: "badge_earned",
-    title: "Badge ottenuto: Ascoltatore Empatico",
-    description: "Hai completato 5 sessioni con valutazione 5 stelle",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: "act-4",
-    type: "case_accepted",
-    title: "Candidatura inviata",
-    description: "Caso: Ansia lavorativa — in attesa di risposta",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  },
-  {
-    id: "act-5",
-    type: "rating_received",
-    title: "Nuova valutazione ricevuta",
-    description: "5 stelle — «Professionale e molto empatica»",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
-  },
-];
+// ---------------------------------------------------------------------------
+// Skeleton components
+// ---------------------------------------------------------------------------
+
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-bg-subtle rounded-xl ${className ?? ""}`} />;
+}
+
+function StatCardSkeleton() {
+  return (
+    <div className="bg-surface rounded-2xl p-5 shadow-sm border border-border flex flex-col gap-4">
+      <div className="flex items-start justify-between">
+        <SkeletonBlock className="h-4 w-28" />
+        <SkeletonBlock className="h-9 w-9 rounded-xl" />
+      </div>
+      <SkeletonBlock className="h-9 w-16" />
+      <SkeletonBlock className="h-3 w-32" />
+    </div>
+  );
+}
+
+function CaseCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <SkeletonBlock className="h-5 w-16 rounded-full" />
+            <SkeletonBlock className="h-5 w-20 rounded-full" />
+          </div>
+          <SkeletonBlock className="h-3 w-40" />
+          <SkeletonBlock className="h-12 w-full" />
+        </div>
+        <SkeletonBlock className="h-14 w-14 rounded-full shrink-0" />
+      </div>
+      <div className="flex gap-2">
+        <SkeletonBlock className="h-5 w-16 rounded-full" />
+        <SkeletonBlock className="h-5 w-16 rounded-full" />
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Growth garden visualization
@@ -129,7 +117,7 @@ function GrowthGarden({ data }: { data: GrowthStageData }) {
       {/* Progress bar */}
       <div className="mb-3">
         <div className="flex justify-between text-xs font-body text-text-tertiary mb-1.5">
-          <span>Esploratore</span>
+          <span>{data.name}</span>
           <span>{data.nextStage}</span>
         </div>
         <div className="h-2.5 bg-bg-subtle rounded-full overflow-hidden">
@@ -152,6 +140,27 @@ function GrowthGarden({ data }: { data: GrowthStageData }) {
             <p className="text-xs font-body text-text-tertiary mb-0.5">{m.label}</p>
             <p className="text-lg font-heading font-bold text-text">{m.value}</p>
           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GrowthGardenSkeleton() {
+  return (
+    <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4">
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-2 flex-1">
+          <SkeletonBlock className="h-3 w-36" />
+          <SkeletonBlock className="h-5 w-28" />
+          <SkeletonBlock className="h-3 w-48" />
+        </div>
+        <SkeletonBlock className="h-12 w-12 rounded-2xl shrink-0" />
+      </div>
+      <SkeletonBlock className="h-2.5 w-full rounded-full" />
+      <div className="grid grid-cols-2 gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <SkeletonBlock key={i} className="h-16 rounded-xl" />
         ))}
       </div>
     </div>
@@ -190,68 +199,163 @@ function ContinuityArc({ percent }: { percent: number }) {
 // ---------------------------------------------------------------------------
 
 export default function PsychologistDashboardPage() {
-  const [cases, setCases] = useState<CaseCardData[]>(MOCK_INCOMING_CASES);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [pendingCases, setPendingCases] = useState<CaseCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleAccept(id: string) {
-    setCases((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "accepted" as const } : c))
-    );
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("/api/dashboard/psychologist");
+        if (!res.ok) throw new Error(`Errore ${res.status}`);
+        const json = await res.json();
+        setData(json);
+        setPendingCases(
+          (json.pendingCases ?? []).map((c: CaseCardData & { postedAt: string | Date }) => ({
+            ...c,
+            postedAt: new Date(c.postedAt),
+          }))
+        );
+      } catch {
+        setError("Non è stato possibile caricare la dashboard. Riprova tra poco.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  async function handleAccept(id: string) {
+    try {
+      await fetch("/api/candidacy/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidacyId: id, action: "accept" }),
+      });
+      setPendingCases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: "accepted" as const } : c))
+      );
+    } catch {
+      setPendingCases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: "accepted" as const } : c))
+      );
+    }
   }
 
-  function handleReject(id: string) {
-    setCases((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
-    );
+  async function handleReject(id: string) {
+    try {
+      await fetch("/api/candidacy/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidacyId: id, action: "reject" }),
+      });
+      setPendingCases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
+      );
+    } catch {
+      setPendingCases((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
+      );
+    }
   }
 
-  const pendingCases = cases.filter((c) => c.status === "pending");
+  const visiblePendingCases = pendingCases.filter((c) => c.status === "pending");
+
+  const stats = data?.stats;
+  const profile = data?.profile;
+  const growthStage = profile?.growthStage;
+  const recentActivity = data?.recentActivity ?? [];
+
+  const firstName = profile?.firstName ?? "";
+  const greeting = firstName ? `Buongiorno, ${firstName} 👋` : "Buongiorno 👋";
+
+  if (error) {
+    return (
+      <div className="px-4 md:px-6 py-6 max-w-6xl mx-auto">
+        <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-2xl p-6">
+          <AlertCircle size={20} className="text-accent-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-body font-semibold text-accent-800">Errore nel caricamento</p>
+            <p className="text-sm font-body text-accent-700 mt-1">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-3 text-xs font-body font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+            >
+              Ricarica la pagina
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 md:px-6 py-6 max-w-6xl mx-auto">
       {/* Page heading */}
       <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold text-text">Buongiorno, Marta 👋</h1>
-        <p className="text-sm font-body text-text-secondary mt-1">
-          Ecco un riepilogo della tua attività su Synapsy
-        </p>
+        {loading ? (
+          <>
+            <SkeletonBlock className="h-7 w-56 mb-2" />
+            <SkeletonBlock className="h-4 w-72" />
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-heading font-bold text-text">{greeting}</h1>
+            <p className="text-sm font-body text-text-secondary mt-1">
+              Ecco un riepilogo della tua attività su Synapsy
+            </p>
+          </>
+        )}
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          label="Pazienti acquisiti"
-          value={4}
-          trend="up"
-          trendLabel="+2 rispetto al mese scorso"
-          icon={<Users size={18} />}
-          variant="primary"
-        />
-        <StatCard
-          label="Fatturato generato"
-          value="480"
-          prefix="€"
-          trend="up"
-          trendLabel="+€120 rispetto al mese scorso"
-          icon={<Euro size={18} />}
-          variant="secondary"
-        />
-        <StatCard
-          label="Crediti disponibili"
-          value={3}
-          trend="neutral"
-          trendLabel="1 in scadenza tra 14 giorni"
-          icon={<Coins size={18} />}
-          variant="accent"
-        />
-        <StatCard
-          label="Tasso di continuità"
-          value=""
-          icon={<Heart size={18} />}
-          variant="primary"
-          extra={<ContinuityArc percent={75} />}
-          trend="up"
-          trendLabel="In crescita"
-        />
+        {loading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Pazienti acquisiti"
+              value={stats?.totalPatients ?? 0}
+              trend={stats?.patientsTrend === "up" ? "up" : stats?.patientsTrend === "down" ? "down" : "neutral"}
+              trendLabel={stats?.patientsTrend === "up" ? "In crescita" : undefined}
+              icon={<Users size={18} />}
+              variant="primary"
+            />
+            <StatCard
+              label="Fatturato generato"
+              value={stats?.revenue ?? 0}
+              prefix="€"
+              trend={stats?.revenueTrend === "up" ? "up" : stats?.revenueTrend === "down" ? "down" : "neutral"}
+              trendLabel={stats?.revenueTrend === "up" ? "In crescita" : undefined}
+              icon={<Euro size={18} />}
+              variant="secondary"
+            />
+            <StatCard
+              label="Crediti disponibili"
+              value={stats?.availableCredits ?? 0}
+              trend="neutral"
+              icon={<Coins size={18} />}
+              variant="accent"
+            />
+            <StatCard
+              label="Tasso di continuità"
+              value=""
+              icon={<Heart size={18} />}
+              variant="primary"
+              extra={<ContinuityArc percent={Math.round((stats?.continuityRate ?? 0) * 100)} />}
+              trend="neutral"
+            />
+          </>
+        )}
       </div>
 
       {/* Main grid */}
@@ -263,9 +367,9 @@ export default function PsychologistDashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-heading font-semibold text-text">
                 Casi in arrivo
-                {pendingCases.length > 0 && (
+                {!loading && visiblePendingCases.length > 0 && (
                   <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-accent-100 text-accent-700 text-xs font-body font-bold">
-                    {pendingCases.length}
+                    {visiblePendingCases.length}
                   </span>
                 )}
               </h2>
@@ -277,7 +381,12 @@ export default function PsychologistDashboardPage() {
               </Link>
             </div>
 
-            {pendingCases.length === 0 ? (
+            {loading ? (
+              <div className="flex flex-col gap-3">
+                <CaseCardSkeleton />
+                <CaseCardSkeleton />
+              </div>
+            ) : visiblePendingCases.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -287,7 +396,7 @@ export default function PsychologistDashboardPage() {
                   <Inbox size={26} className="text-text-tertiary" />
                 </div>
                 <p className="text-sm font-body font-medium text-text-secondary">
-                  Nessun caso in arrivo al momento
+                  Nessun caso in arrivo. I tuoi pazienti arriveranno presto!
                 </p>
                 <p className="text-xs font-body text-text-tertiary mt-1">
                   Ti notificheremo non appena un nuovo caso compatibile sarà disponibile
@@ -295,7 +404,7 @@ export default function PsychologistDashboardPage() {
               </motion.div>
             ) : (
               <div className="flex flex-col gap-3">
-                {pendingCases.map((c) => (
+                {visiblePendingCases.map((c) => (
                   <CaseCard
                     key={c.id}
                     case_={c}
@@ -312,13 +421,48 @@ export default function PsychologistDashboardPage() {
             <h2 className="text-base font-heading font-semibold text-text mb-4">
               Attività recente
             </h2>
-            <ActivityTimeline events={MOCK_ACTIVITY} maxItems={5} showViewAll />
+            {loading ? (
+              <div className="flex flex-col gap-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex gap-4">
+                    <SkeletonBlock className="h-8 w-8 rounded-xl shrink-0" />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <SkeletonBlock className="h-4 w-40" />
+                      <SkeletonBlock className="h-3 w-56" />
+                      <SkeletonBlock className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ActivityTimeline
+                events={recentActivity.map((e: ActivityEvent & { timestamp: string | Date }) => ({
+                  ...e,
+                  timestamp: new Date(e.timestamp),
+                }))}
+                maxItems={5}
+                showViewAll
+              />
+            )}
           </section>
         </div>
 
-        {/* Right column: growth garden */}
+        {/* Right column: growth garden + quick actions */}
         <div className="flex flex-col gap-6">
-          <GrowthGarden data={MOCK_GROWTH} />
+          {loading ? (
+            <GrowthGardenSkeleton />
+          ) : growthStage ? (
+            <GrowthGarden data={growthStage} />
+          ) : (
+            <div className="bg-surface rounded-2xl border border-border shadow-sm p-6 flex flex-col items-center justify-center text-center gap-3 min-h-[200px]">
+              <div className="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center">
+                <Sprout size={24} className="text-primary-600" />
+              </div>
+              <p className="text-sm font-body text-text-secondary">
+                Il tuo giardino della crescita è in costruzione
+              </p>
+            </div>
+          )}
 
           {/* Quick actions */}
           <div className="bg-surface rounded-2xl border border-border shadow-sm p-5">

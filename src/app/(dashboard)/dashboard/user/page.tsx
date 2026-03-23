@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -10,16 +11,16 @@ import {
   Users,
   CheckCircle2,
   PhoneCall,
-  AlertCircle,
+  AlertCircle as AlertCircleIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { UserCaseStatus, type CaseStatus } from "@/components/dashboard/user-case-status";
 import { MatchCard, type MatchedPsychologist } from "@/components/dashboard/match-card";
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-interface MockCase {
+interface CurrentCase {
   id: string;
   status: CaseStatus;
   primaryProblem: string;
@@ -27,7 +28,7 @@ interface MockCase {
   matchedPsychologist?: MatchedPsychologist;
 }
 
-interface MockHistoryEntry {
+interface HistoryEntry {
   id: string;
   primaryProblem: string;
   status: "completed" | "expired" | "cancelled";
@@ -35,80 +36,36 @@ interface MockHistoryEntry {
   outcome?: string;
 }
 
-const MOCK_USER_NAME = "Sofia";
+interface DashboardData {
+  currentCase: CurrentCase | null;
+  matches: MatchedPsychologist[];
+  history?: HistoryEntry[];
+  userName?: string;
+}
 
-const MOCK_CURRENT_CASE: MockCase = {
-  id: "case-001",
-  status: "in_call",
-  primaryProblem: "Ansia e stress lavorativo",
-  createdAt: "2026-03-10T10:00:00Z",
-  matchedPsychologist: {
-    id: "psych-001",
-    matchSelectionId: "match-001",
-    name: "Dr.ssa Martina Ferretti",
-    specializations: ["Ansia", "Stress da lavoro", "Disturbi del sonno"],
-    approach: "Cognitivo-comportamentale (CBT)",
-    averageRating: 4.8,
-    continuityRate: 0.87,
-    modality: "online",
-    callScheduledAt: "2026-03-25T15:00:00Z",
-    status: "call_scheduled",
-  },
-};
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-const MOCK_MATCHES: MatchedPsychologist[] = [
-  {
-    id: "psych-001",
-    matchSelectionId: "match-001",
-    name: "Dr.ssa Martina Ferretti",
-    specializations: ["Ansia", "Stress da lavoro", "Disturbi del sonno"],
-    approach: "Cognitivo-comportamentale (CBT)",
-    averageRating: 4.8,
-    continuityRate: 0.87,
-    modality: "online",
-    callScheduledAt: "2026-03-25T15:00:00Z",
-    status: "call_scheduled",
-  },
-  {
-    id: "psych-002",
-    matchSelectionId: "match-002",
-    name: "Dr. Luca Antonelli",
-    specializations: ["Ansia", "Relazioni", "Autostima"],
-    approach: "Psicodinamico",
-    averageRating: 4.5,
-    continuityRate: 0.79,
-    modality: "both",
-    status: "selected",
-  },
-  {
-    id: "psych-003",
-    matchSelectionId: "match-003",
-    name: "Dr.ssa Elena Russo",
-    specializations: ["Stress", "Burnout"],
-    approach: "ACT — Acceptance & Commitment Therapy",
-    averageRating: 4.6,
-    continuityRate: 0.82,
-    modality: "online",
-    status: "call_completed",
-  },
-];
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-bg-subtle rounded-xl ${className ?? ""}`} />;
+}
 
-const MOCK_HISTORY: MockHistoryEntry[] = [
-  {
-    id: "case-history-001",
-    primaryProblem: "Difficoltà relazionali",
-    status: "completed",
-    createdAt: "2025-09-15T08:00:00Z",
-    outcome: "Percorso avviato con Dr. Marco Bianchi",
-  },
-  {
-    id: "case-history-002",
-    primaryProblem: "Umore basso",
-    status: "expired",
-    createdAt: "2025-06-01T08:00:00Z",
-    outcome: "Nessun professionista selezionato entro i termini",
-  },
-];
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <SkeletonBlock className="h-4 w-28" />
+        <SkeletonBlock className="h-7 w-40" />
+      </div>
+      {/* Status strip */}
+      <SkeletonBlock className="h-14 w-full rounded-2xl" />
+      {/* Tabs */}
+      <SkeletonBlock className="h-11 w-full rounded-xl" />
+      {/* Card */}
+      <SkeletonBlock className="h-48 w-full rounded-2xl" />
+    </div>
+  );
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -138,7 +95,7 @@ function SectionHeader({
 
 // ─── Empty case CTA ───────────────────────────────────────────────────────────
 
-function NoCaseCTA({ onStart }: { onStart: () => void }) {
+function NoCaseCTA() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -157,13 +114,13 @@ function NoCaseCTA({ onStart }: { onStart: () => void }) {
           in pochi minuti.
         </p>
       </div>
-      <button
-        onClick={onStart}
+      <Link
+        href="/questionnaire"
         className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-body font-semibold py-3 px-6 rounded-xl transition-colors duration-200 shadow-sm hover:shadow-md"
       >
         Inizia il questionario
         <ChevronRight size={15} />
-      </button>
+      </Link>
     </motion.div>
   );
 }
@@ -226,7 +183,7 @@ function MatchedStatusCard({
   onScheduleCall,
   onOpenQuestionnaire,
 }: {
-  caseData: MockCase;
+  caseData: CurrentCase;
   onScheduleCall: (matchSelectionId: string) => void;
   onOpenQuestionnaire: (matchSelectionId: string) => void;
 }) {
@@ -258,7 +215,7 @@ function MatchedStatusCard({
     call_completed: {
       title: "Call completata",
       body: "Come è andata? Condividi il tuo feedback per procedere.",
-      icon: <AlertCircle size={20} className="text-accent-600" />,
+      icon: <AlertCircleIcon size={20} className="text-accent-600" />,
       color: "border-accent-200 bg-accent-50",
     },
     continued: {
@@ -305,7 +262,7 @@ function MatchedStatusCard({
 
 // ─── History section ──────────────────────────────────────────────────────────
 
-function HistorySection({ entries }: { entries: MockHistoryEntry[] }) {
+function HistorySection({ entries }: { entries: HistoryEntry[] }) {
   if (entries.length === 0) {
     return (
       <p className="text-sm font-body text-text-secondary text-center py-6">
@@ -314,13 +271,13 @@ function HistorySection({ entries }: { entries: MockHistoryEntry[] }) {
     );
   }
 
-  const statusLabels: Record<MockHistoryEntry["status"], string> = {
+  const statusLabels: Record<HistoryEntry["status"], string> = {
     completed: "Completato",
     expired: "Scaduto",
     cancelled: "Annullato",
   };
 
-  const statusColors: Record<MockHistoryEntry["status"], string> = {
+  const statusColors: Record<HistoryEntry["status"], string> = {
     completed: "bg-primary-100 text-primary-700 border-primary-200",
     expired: "bg-bg-subtle text-text-secondary border-border",
     cancelled: "bg-accent-100 text-accent-700 border-accent-200",
@@ -384,184 +341,233 @@ const TABS: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
 export default function UserDashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>("current");
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // In production, fetch from API. Using mock data for now.
-  const currentCase: MockCase | null = MOCK_CURRENT_CASE;
-  const matches: MatchedPsychologist[] = MOCK_MATCHES;
-  const history: MockHistoryEntry[] = MOCK_HISTORY;
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        setError(null);
+        const res = await fetch("/api/dashboard/user");
+        if (!res.ok) throw new Error(`Errore ${res.status}`);
+        const json = await res.json();
+        setDashboardData(json);
+      } catch {
+        setError("Non è stato possibile caricare la dashboard. Riprova tra poco.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  const currentCase = dashboardData?.currentCase ?? null;
+  const matches = dashboardData?.matches ?? [];
+  const history = dashboardData?.history ?? [];
+  const userName = dashboardData?.userName ?? "";
 
   function handleScheduleCall(matchSelectionId: string) {
-    // In production: open a scheduling modal or navigate to scheduling page
-    alert(`Apertura schedulazione per match: ${matchSelectionId}`);
+    router.push(`/scheduling/${matchSelectionId}`);
   }
 
   function handleOpenQuestionnaire(matchSelectionId: string) {
-    router.push(`/verification/${matchSelectionId}?type=user&respondentId=mock-user-id`);
-  }
-
-  function handleStartQuestionnaire() {
-    router.push("/");
+    router.push(`/verification/${matchSelectionId}?type=user`);
   }
 
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="space-y-1"
-        >
-          <p className="text-sm font-body text-text-secondary">
-            Bentornata,
-          </p>
-          <h1 className="text-2xl font-heading font-bold text-text">
-            {MOCK_USER_NAME}
-          </h1>
-        </motion.div>
-
-        {/* Case status strip */}
-        {currentCase && (
-          <UserCaseStatus currentStatus={currentCase.status} />
+        {loading ? (
+          <div className="space-y-2">
+            <SkeletonBlock className="h-4 w-28" />
+            <SkeletonBlock className="h-7 w-44" />
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-1"
+          >
+            <p className="text-sm font-body text-text-secondary">
+              {userName ? "Bentornata," : "Bentornato,"}
+            </p>
+            <h1 className="text-2xl font-heading font-bold text-text">
+              {userName || "il tuo percorso"}
+            </h1>
+          </motion.div>
         )}
 
-        {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="flex gap-1 bg-bg-subtle p-1 rounded-xl border border-border"
-        >
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={[
-                "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-body font-semibold transition-all duration-200",
-                activeTab === tab.id
-                  ? "bg-surface text-text shadow-sm border border-border"
-                  : "text-text-secondary hover:text-text",
-              ].join(" ")}
-            >
-              {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
-            </button>
-          ))}
-        </motion.div>
+        {/* Error state */}
+        {error && (
+          <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-2xl p-5">
+            <AlertCircleIcon size={18} className="text-accent-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-body font-semibold text-accent-800">Errore nel caricamento</p>
+              <p className="text-sm font-body text-accent-700 mt-0.5">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 text-xs font-body font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+              >
+                Ricarica la pagina
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* Tab content */}
-        <AnimatePresence mode="wait">
-          {activeTab === "current" && (
+        {loading ? (
+          <DashboardSkeleton />
+        ) : !error && (
+          <>
+            {/* Case status strip */}
+            {currentCase && (
+              <UserCaseStatus currentStatus={currentCase.status} />
+            )}
+
+            {/* Tabs */}
             <motion.div
-              key="current"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="flex gap-1 bg-bg-subtle p-1 rounded-xl border border-border"
             >
-              <SectionHeader
-                icon={<Sparkles size={16} />}
-                title="Caso attuale"
-                subtitle={
-                  currentCase ? currentCase.primaryProblem : undefined
-                }
-              />
-
-              {!currentCase ? (
-                <NoCaseCTA onStart={handleStartQuestionnaire} />
-              ) : currentCase.status === "pending" ||
-                currentCase.status === "matching" ? (
-                <WaitingState status={currentCase.status} />
-              ) : currentCase.status === "matched" ||
-                currentCase.status === "in_call" ? (
-                <MatchedStatusCard
-                  caseData={currentCase}
-                  onScheduleCall={handleScheduleCall}
-                  onOpenQuestionnaire={handleOpenQuestionnaire}
-                />
-              ) : currentCase.status === "completed" ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-primary-50 border border-primary-200 rounded-2xl p-6 text-center space-y-3"
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={[
+                    "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-body font-semibold transition-all duration-200",
+                    activeTab === tab.id
+                      ? "bg-surface text-text shadow-sm border border-border"
+                      : "text-text-secondary hover:text-text",
+                  ].join(" ")}
                 >
-                  <CheckCircle2 size={32} className="text-primary-500 mx-auto" />
-                  <h3 className="font-heading font-bold text-text">
-                    Percorso completato
-                  </h3>
-                  <p className="text-sm font-body text-text-secondary">
-                    Hai completato il tuo percorso conoscitivo con successo.
-                    Puoi iniziarne uno nuovo quando vuoi.
-                  </p>
-                  <button
-                    onClick={handleStartQuestionnaire}
-                    className="inline-flex items-center gap-2 mt-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-body font-semibold py-2.5 px-5 rounded-xl transition-colors duration-200"
-                  >
-                    Inizia un nuovo percorso
-                    <ChevronRight size={14} />
-                  </button>
-                </motion.div>
-              ) : null}
+                  {tab.icon}
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              ))}
             </motion.div>
-          )}
 
-          {activeTab === "matches" && (
-            <motion.div
-              key="matches"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              <SectionHeader
-                icon={<Users size={16} />}
-                title="I miei match"
-                subtitle={`${matches.length} professionisti abbinati`}
-              />
+            {/* Tab content */}
+            <AnimatePresence mode="wait">
+              {activeTab === "current" && (
+                <motion.div
+                  key="current"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 8 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4"
+                >
+                  <SectionHeader
+                    icon={<Sparkles size={16} />}
+                    title="Caso attuale"
+                    subtitle={currentCase ? currentCase.primaryProblem : undefined}
+                  />
 
-              {matches.length === 0 ? (
-                <div className="bg-surface rounded-2xl border border-border p-8 text-center">
-                  <p className="text-sm font-body text-text-secondary">
-                    Nessun match ancora. Completa il questionario per iniziare.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {matches.map((psych, index) => (
-                    <MatchCard
-                      key={psych.id}
-                      psychologist={psych}
+                  {!currentCase ? (
+                    <NoCaseCTA />
+                  ) : currentCase.status === "pending" ||
+                    currentCase.status === "matching" ? (
+                    <WaitingState status={currentCase.status} />
+                  ) : currentCase.status === "matched" ||
+                    currentCase.status === "in_call" ? (
+                    <MatchedStatusCard
+                      caseData={currentCase}
                       onScheduleCall={handleScheduleCall}
                       onOpenQuestionnaire={handleOpenQuestionnaire}
-                      animationDelay={index * 0.08}
                     />
-                  ))}
-                </div>
+                  ) : currentCase.status === "completed" ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-primary-50 border border-primary-200 rounded-2xl p-6 text-center space-y-3"
+                    >
+                      <CheckCircle2 size={32} className="text-primary-500 mx-auto" />
+                      <h3 className="font-heading font-bold text-text">
+                        Percorso completato
+                      </h3>
+                      <p className="text-sm font-body text-text-secondary">
+                        Hai completato il tuo percorso conoscitivo con successo.
+                        Puoi iniziarne uno nuovo quando vuoi.
+                      </p>
+                      <Link
+                        href="/questionnaire"
+                        className="inline-flex items-center gap-2 mt-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-body font-semibold py-2.5 px-5 rounded-xl transition-colors duration-200"
+                      >
+                        Inizia un nuovo percorso
+                        <ChevronRight size={14} />
+                      </Link>
+                    </motion.div>
+                  ) : null}
+                </motion.div>
               )}
-            </motion.div>
-          )}
 
-          {activeTab === "history" && (
-            <motion.div
-              key="history"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              <SectionHeader
-                icon={<History size={16} />}
-                title="Storico"
-                subtitle="I tuoi casi precedenti"
-              />
-              <HistorySection entries={history} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {activeTab === "matches" && (
+                <motion.div
+                  key="matches"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 8 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4"
+                >
+                  <SectionHeader
+                    icon={<Users size={16} />}
+                    title="I miei match"
+                    subtitle={`${matches.length} professionisti abbinati`}
+                  />
+
+                  {matches.length === 0 ? (
+                    <div className="bg-surface rounded-2xl border border-border p-8 text-center">
+                      <p className="text-sm font-body text-text-secondary">
+                        Nessun match ancora. Completa il questionario per iniziare.
+                      </p>
+                      <Link
+                        href="/questionnaire"
+                        className="inline-flex items-center gap-1.5 mt-4 text-sm font-body font-semibold text-primary-600 hover:text-primary-700 underline underline-offset-2"
+                      >
+                        Inizia il questionario <ChevronRight size={14} />
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {matches.map((psych, index) => (
+                        <MatchCard
+                          key={psych.id}
+                          psychologist={psych}
+                          onScheduleCall={handleScheduleCall}
+                          onOpenQuestionnaire={handleOpenQuestionnaire}
+                          animationDelay={index * 0.08}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {activeTab === "history" && (
+                <motion.div
+                  key="history"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 8 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-4"
+                >
+                  <SectionHeader
+                    icon={<History size={16} />}
+                    title="Storico"
+                    subtitle="I tuoi casi precedenti"
+                  />
+                  <HistorySection entries={history} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
       </div>
     </div>
   );

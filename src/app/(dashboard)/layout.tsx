@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils/cn";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -260,6 +261,7 @@ function MobileTopBar() {
             <StageIcon size={10} />
             {MOCK_USER.growthStage}
           </span>
+          <NotificationBell />
           <div className="w-8 h-8 rounded-full bg-primary-200 flex items-center justify-center">
             <span className="text-xs font-heading font-bold text-primary-700">
               {MOCK_USER.avatarInitials}
@@ -357,6 +359,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </span>
               );
             })()}
+            <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-primary-200 flex items-center justify-center">
               <span className="text-sm font-heading font-bold text-primary-700">
                 {MOCK_USER.avatarInitials}

@@ -1,88 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Inbox, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Inbox, SlidersHorizontal, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { CaseCard, type CaseCardData, type CaseStatus } from "@/components/dashboard/case-card";
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Types
 // ---------------------------------------------------------------------------
-
-const MOCK_CASES: CaseCardData[] = [
-  {
-    id: "c-1",
-    anonymousDescription:
-      "Persona adulta, 28 anni, segnala difficoltà nella gestione dell'ansia in contesti lavorativi e sociali. Riferisce episodi di attacchi di panico nelle ultime 3 settimane.",
-    primaryProblem: "Ansia e attacchi di panico",
-    intensity: 4,
-    modality: "online",
-    compatibilityScore: 91,
-    postedAt: new Date(Date.now() - 1000 * 60 * 45),
-    keyAttributes: ["Lavoro", "Relazioni sociali", "Urgenza moderata"],
-    status: "pending",
-  },
-  {
-    id: "c-2",
-    anonymousDescription:
-      "Persona di 35 anni che attraversa un periodo di bassa autostima e difficoltà nelle relazioni intime. Ha già avuto esperienze di terapia in passato.",
-    primaryProblem: "Autostima e relazioni",
-    intensity: 3,
-    modality: "ibrido",
-    compatibilityScore: 84,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    keyAttributes: ["Esperienza terapeutica", "Relazioni", "Adulto"],
-    status: "pending",
-  },
-  {
-    id: "c-3",
-    anonymousDescription:
-      "Adolescente 17 anni accompagnato dai genitori. Mostra segni di ritiro sociale e calo del rendimento scolastico negli ultimi 2 mesi.",
-    primaryProblem: "Disagio adolescenziale",
-    intensity: 3,
-    modality: "presenziale",
-    compatibilityScore: 78,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 8),
-    keyAttributes: ["Adolescente", "Famiglia", "Scuola"],
-    status: "accepted",
-  },
-  {
-    id: "c-4",
-    anonymousDescription:
-      "Adulto 42 anni in fase post-separazione coniugale. Riporta difficoltà nel gestire le emozioni e nell'affrontare il cambiamento.",
-    primaryProblem: "Separazione e lutto relazionale",
-    intensity: 4,
-    modality: "online",
-    compatibilityScore: 88,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    keyAttributes: ["Coppia", "Adulto", "Cambiamento"],
-    status: "accepted",
-  },
-  {
-    id: "c-5",
-    anonymousDescription:
-      "Giovane adulta 24 anni, segnala stati depressivi ciclici. Ha già una diagnosi di disturbo dell'umore in anamnesi.",
-    primaryProblem: "Disturbo dell'umore",
-    intensity: 5,
-    modality: "online",
-    compatibilityScore: 67,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-    keyAttributes: ["Depressione", "Diagnosi pregressa", "Giovane adulta"],
-    status: "rejected",
-  },
-  {
-    id: "c-6",
-    anonymousDescription:
-      "Persona 55 anni con difficoltà legate al pensionamento imminente. Sensazione di perdita di identità e scopo.",
-    primaryProblem: "Crisi di mezza età / transizione",
-    intensity: 2,
-    modality: "presenziale",
-    compatibilityScore: 82,
-    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-    keyAttributes: ["Lavoro", "Identità", "Over 50"],
-    status: "completed",
-  },
-];
 
 type FilterTab = "tutti" | CaseStatus;
 
@@ -100,20 +25,97 @@ const TABS: TabConfig[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Skeleton
+// ---------------------------------------------------------------------------
+
+function CaseCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <div className="animate-pulse bg-bg-subtle h-5 w-16 rounded-full" />
+            <div className="animate-pulse bg-bg-subtle h-5 w-20 rounded-full" />
+          </div>
+          <div className="animate-pulse bg-bg-subtle h-3 w-40 rounded" />
+          <div className="animate-pulse bg-bg-subtle h-12 w-full rounded-xl" />
+        </div>
+        <div className="animate-pulse bg-bg-subtle h-14 w-14 rounded-full shrink-0" />
+      </div>
+      <div className="flex gap-2">
+        <div className="animate-pulse bg-bg-subtle h-5 w-16 rounded-full" />
+        <div className="animate-pulse bg-bg-subtle h-5 w-16 rounded-full" />
+      </div>
+      <div className="flex gap-2 pt-1 border-t border-border">
+        <div className="animate-pulse bg-bg-subtle h-9 flex-1 rounded-xl" />
+        <div className="animate-pulse bg-bg-subtle h-9 flex-1 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function CasesPage() {
-  const [cases, setCases] = useState<CaseCardData[]>(MOCK_CASES);
+  const [cases, setCases] = useState<CaseCardData[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>("tutti");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleAccept(id: string) {
+  async function fetchCases() {
+    try {
+      setError(null);
+      const res = await fetch("/api/cases/incoming");
+      if (!res.ok) throw new Error(`Errore ${res.status}`);
+      const json = await res.json();
+      const raw: Array<CaseCardData & { postedAt: string | Date }> = Array.isArray(json)
+        ? json
+        : json.data ?? [];
+      setCases(
+        raw.map((c) => ({
+          ...c,
+          postedAt: new Date(c.postedAt),
+        }))
+      );
+    } catch {
+      setError("Non è stato possibile caricare i casi. Riprova tra poco.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchCases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleAccept(id: string) {
+    try {
+      await fetch("/api/candidacy/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidacyId: id, action: "accept" }),
+      });
+    } catch {
+      // optimistic update proceeds regardless
+    }
     setCases((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: "accepted" as const } : c))
     );
   }
 
-  function handleReject(id: string) {
+  async function handleReject(id: string) {
+    try {
+      await fetch("/api/candidacy/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidacyId: id, action: "reject" }),
+      });
+    } catch {
+      // optimistic update proceeds regardless
+    }
     setCases((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: "rejected" as const } : c))
     );
@@ -144,70 +146,102 @@ export default function CasesPage() {
         </button>
       </div>
 
+      {/* Error state */}
+      {error && (
+        <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-2xl p-5 mb-6">
+          <AlertCircle size={18} className="text-accent-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-body font-semibold text-accent-800">Errore nel caricamento</p>
+            <p className="text-sm font-body text-accent-700 mt-0.5">{error}</p>
+            <button
+              onClick={fetchCases}
+              className="mt-2 text-xs font-body font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+            >
+              Riprova
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter tabs */}
-      <div className="flex gap-1 p-1 bg-bg-subtle rounded-xl mb-6 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`
-              relative px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors duration-150 flex items-center gap-1.5
-              ${activeTab === tab.key
-                ? "bg-surface text-text shadow-sm"
-                : "text-text-secondary hover:text-text"
-              }
-            `}
-          >
-            {tab.label}
-            {countFor(tab) > 0 && (
-              <span
-                className={`text-xs rounded-full px-1.5 py-0.5 leading-none font-bold ${
-                  activeTab === tab.key
-                    ? "bg-primary-100 text-primary-700"
-                    : "bg-border text-text-tertiary"
-                }`}
-              >
-                {countFor(tab)}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {!loading && !error && (
+        <div className="flex gap-1 p-1 bg-bg-subtle rounded-xl mb-6 w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`
+                relative px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors duration-150 flex items-center gap-1.5
+                ${activeTab === tab.key
+                  ? "bg-surface text-text shadow-sm"
+                  : "text-text-secondary hover:text-text"
+                }
+              `}
+            >
+              {tab.label}
+              {countFor(tab) > 0 && (
+                <span
+                  className={`text-xs rounded-full px-1.5 py-0.5 leading-none font-bold ${
+                    activeTab === tab.key
+                      ? "bg-primary-100 text-primary-700"
+                      : "bg-border text-text-tertiary"
+                  }`}
+                >
+                  {countFor(tab)}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="flex flex-col gap-4">
+          <CaseCardSkeleton />
+          <CaseCardSkeleton />
+          <CaseCardSkeleton />
+        </div>
+      )}
 
       {/* Case list */}
-      <AnimatePresence mode="popLayout">
-        {filteredCases.length === 0 ? (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center py-20 text-center"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-bg-subtle flex items-center justify-center mb-4">
-              <Inbox size={28} className="text-text-tertiary" />
+      {!loading && !error && (
+        <AnimatePresence mode="popLayout">
+          {filteredCases.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-20 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-bg-subtle flex items-center justify-center mb-4">
+                <Inbox size={28} className="text-text-tertiary" />
+              </div>
+              <p className="text-base font-body font-medium text-text-secondary">
+                {activeTab === "tutti"
+                  ? "Nessun caso in arrivo. I tuoi pazienti arriveranno presto!"
+                  : "Nessun caso in questa categoria"}
+              </p>
+              <p className="text-sm font-body text-text-tertiary mt-1">
+                Ti notificheremo quando nuovi casi compatibili saranno disponibili
+              </p>
+            </motion.div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {filteredCases.map((c) => (
+                <CaseCard
+                  key={c.id}
+                  case_={c}
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                  showActions={c.status === "pending"}
+                />
+              ))}
             </div>
-            <p className="text-base font-body font-medium text-text-secondary">
-              Nessun caso in questa categoria
-            </p>
-            <p className="text-sm font-body text-text-tertiary mt-1">
-              Ti notificheremo quando nuovi casi compatibili saranno disponibili
-            </p>
-          </motion.div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {filteredCases.map((c) => (
-              <CaseCard
-                key={c.id}
-                case_={c}
-                onAccept={handleAccept}
-                onReject={handleReject}
-                showActions={c.status === "pending"}
-              />
-            ))}
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }

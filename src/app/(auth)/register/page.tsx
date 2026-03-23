@@ -127,7 +127,23 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/dashboard");
+      // Send welcome notification
+      try {
+        await fetch("/api/auth/hooks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: result.data?.user?.id,
+            role: "user",
+            email: values.email.trim(),
+            name: values.name.trim(),
+          }),
+        });
+      } catch {
+        // Non-critical
+      }
+
+      router.push("/questionnaire");
     } catch {
       setGlobalError("Si è verificato un errore. Riprova tra qualche istante.");
     } finally {

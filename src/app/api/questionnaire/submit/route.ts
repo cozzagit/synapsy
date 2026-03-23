@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
 import { getServerSession } from "@/lib/auth/session";
+import { distributeCase } from "@/lib/cases";
 import type { QuestionnaireResponse } from "@/types";
 
 export async function POST(request: NextRequest) {
@@ -73,6 +74,13 @@ export async function POST(request: NextRequest) {
         referralPsychologistId: referralId || null,
       })
       .returning();
+
+    // Trigger case distribution asynchronously — questionnaire submission succeeds regardless
+    try {
+      await distributeCase(newCase.id);
+    } catch (distributionError) {
+      console.error("Case distribution failed (non-blocking):", distributionError);
+    }
 
     return NextResponse.json({
       data: {

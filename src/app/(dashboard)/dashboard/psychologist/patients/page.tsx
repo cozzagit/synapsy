@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -14,7 +14,7 @@ import {
 import { motion } from "motion/react";
 
 // ---------------------------------------------------------------------------
-// Types & mock data
+// Types
 // ---------------------------------------------------------------------------
 
 type PatientStatus = "active" | "paused" | "completed";
@@ -24,65 +24,14 @@ interface Patient {
   id: string;
   anonymousCode: string;
   primaryProblem: string;
-  startDate: Date;
-  lastSessionDate: Date | null;
-  nextSessionDate: Date | null;
+  startDate: string | Date;
+  lastSessionDate: string | Date | null;
+  nextSessionDate: string | Date | null;
   totalSessions: number;
   status: PatientStatus;
   continuityLevel: ContinuityLevel;
   needsQuestionnaire: boolean;
 }
-
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: "p-1",
-    anonymousCode: "MR-2024-01",
-    primaryProblem: "Ansia generalizzata",
-    startDate: new Date("2024-10-01"),
-    lastSessionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-    nextSessionDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
-    totalSessions: 8,
-    status: "active",
-    continuityLevel: "high",
-    needsQuestionnaire: true,
-  },
-  {
-    id: "p-2",
-    anonymousCode: "FS-2024-02",
-    primaryProblem: "Depressione lieve",
-    startDate: new Date("2024-11-15"),
-    lastSessionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
-    nextSessionDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    totalSessions: 4,
-    status: "active",
-    continuityLevel: "medium",
-    needsQuestionnaire: false,
-  },
-  {
-    id: "p-3",
-    anonymousCode: "AG-2024-03",
-    primaryProblem: "Disturbo relazionale",
-    startDate: new Date("2024-08-20"),
-    lastSessionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45),
-    nextSessionDate: null,
-    totalSessions: 12,
-    status: "paused",
-    continuityLevel: "low",
-    needsQuestionnaire: false,
-  },
-  {
-    id: "p-4",
-    anonymousCode: "LB-2024-04",
-    primaryProblem: "Crisi di identità",
-    startDate: new Date("2024-06-01"),
-    lastSessionDate: new Date("2024-12-15"),
-    nextSessionDate: null,
-    totalSessions: 20,
-    status: "completed",
-    continuityLevel: "high",
-    needsQuestionnaire: false,
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -126,12 +75,49 @@ function ContinuityIndicator({ level }: { level: ContinuityLevel }) {
 }
 
 // ---------------------------------------------------------------------------
+// Skeleton
+// ---------------------------------------------------------------------------
+
+function PatientCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="animate-pulse bg-bg-subtle w-10 h-10 rounded-full shrink-0" />
+          <div className="flex flex-col gap-2">
+            <div className="animate-pulse bg-bg-subtle h-4 w-24 rounded" />
+            <div className="animate-pulse bg-bg-subtle h-3 w-36 rounded" />
+          </div>
+        </div>
+        <div className="animate-pulse bg-bg-subtle h-5 w-20 rounded-full" />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col gap-1">
+            <div className="animate-pulse bg-bg-subtle h-3 w-16 rounded" />
+            <div className="animate-pulse bg-bg-subtle h-4 w-12 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t border-border">
+        <div className="animate-pulse bg-bg-subtle h-4 w-24 rounded" />
+        <div className="animate-pulse bg-bg-subtle h-7 w-20 rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Patient card
 // ---------------------------------------------------------------------------
 
 function PatientCard({ patient }: { patient: Patient }) {
   const status = statusConfig[patient.status];
   const StatusIcon = status.icon;
+
+  const startDate = patient.startDate ? new Date(patient.startDate) : null;
+  const lastSessionDate = patient.lastSessionDate ? new Date(patient.lastSessionDate) : null;
+  const nextSessionDate = patient.nextSessionDate ? new Date(patient.nextSessionDate) : null;
 
   return (
     <motion.div
@@ -165,12 +151,12 @@ function PatientCard({ patient }: { patient: Patient }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-body mb-4">
         <div>
           <p className="text-text-tertiary mb-0.5">Inizio terapia</p>
-          <p className="font-medium text-text">{formatShortDate(patient.startDate)}</p>
+          <p className="font-medium text-text">{startDate ? formatShortDate(startDate) : "—"}</p>
         </div>
         <div>
           <p className="text-text-tertiary mb-0.5">Ultima seduta</p>
           <p className="font-medium text-text">
-            {patient.lastSessionDate ? formatShortDate(patient.lastSessionDate) : "—"}
+            {lastSessionDate ? formatShortDate(lastSessionDate) : "—"}
           </p>
         </div>
         <div>
@@ -180,10 +166,10 @@ function PatientCard({ patient }: { patient: Patient }) {
       </div>
 
       {/* Next session */}
-      {patient.nextSessionDate && (
+      {nextSessionDate && (
         <div className="flex items-center gap-2 text-xs font-body text-secondary-700 bg-secondary-50 rounded-xl px-3 py-2 mb-4">
           <Clock size={13} />
-          <span>Prossima seduta: <strong>{formatDate(patient.nextSessionDate)}</strong></span>
+          <span>Prossima seduta: <strong>{formatDate(nextSessionDate)}</strong></span>
         </div>
       )}
 
@@ -224,84 +210,153 @@ const TABS: { key: FilterTab; label: string }[] = [
 ];
 
 export default function PatientsPage() {
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>("tutti");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchPatients() {
+    try {
+      setError(null);
+      const res = await fetch("/api/patients");
+      if (!res.ok) throw new Error(`Errore ${res.status}`);
+      const json = await res.json();
+      const raw: Patient[] = Array.isArray(json) ? json : json.data ?? [];
+      setPatients(raw);
+    } catch {
+      setError("Non è stato possibile caricare i pazienti. Riprova tra poco.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchPatients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered =
     activeTab === "tutti"
-      ? MOCK_PATIENTS
-      : MOCK_PATIENTS.filter((p) => p.status === activeTab);
+      ? patients
+      : patients.filter((p) => p.status === activeTab);
 
   const countFor = (tab: FilterTab) =>
-    tab === "tutti" ? MOCK_PATIENTS.length : MOCK_PATIENTS.filter((p) => p.status === tab).length;
+    tab === "tutti" ? patients.length : patients.filter((p) => p.status === tab).length;
 
-  const activeCount = MOCK_PATIENTS.filter((p) => p.status === "active").length;
+  const activeCount = patients.filter((p) => p.status === "active").length;
+  const pausedCount = patients.filter((p) => p.status === "paused").length;
+  const completedCount = patients.filter((p) => p.status === "completed").length;
 
   return (
     <div className="px-4 md:px-6 py-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-heading font-bold text-text">I miei pazienti</h1>
-        <p className="text-sm font-body text-text-secondary mt-1">
-          {activeCount} pazient{activeCount === 1 ? "e" : "i"} attiv{activeCount === 1 ? "o" : "i"} in questo momento
-        </p>
+        {loading ? (
+          <div className="animate-pulse bg-bg-subtle h-4 w-48 rounded mt-2" />
+        ) : (
+          <p className="text-sm font-body text-text-secondary mt-1">
+            {activeCount} pazient{activeCount === 1 ? "e" : "i"} attiv{activeCount === 1 ? "o" : "i"} in questo momento
+          </p>
+        )}
       </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-2xl p-5 mb-6">
+          <AlertCircle size={18} className="text-accent-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-body font-semibold text-accent-800">Errore nel caricamento</p>
+            <p className="text-sm font-body text-accent-700 mt-0.5">{error}</p>
+            <button
+              onClick={fetchPatients}
+              className="mt-2 text-xs font-body font-medium text-accent-700 underline underline-offset-2 hover:text-accent-800"
+            >
+              Riprova
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: "Attivi", value: MOCK_PATIENTS.filter((p) => p.status === "active").length, color: "text-primary-600", bg: "bg-primary-50" },
-          { label: "In pausa", value: MOCK_PATIENTS.filter((p) => p.status === "paused").length, color: "text-warning", bg: "bg-accent-50" },
-          { label: "Completati", value: MOCK_PATIENTS.filter((p) => p.status === "completed").length, color: "text-text-secondary", bg: "bg-bg-subtle" },
-        ].map((s) => (
-          <div key={s.label} className={`rounded-2xl p-4 ${s.bg} text-center`}>
-            <p className={`text-2xl font-heading font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs font-body text-text-secondary mt-0.5">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-1 p-1 bg-bg-subtle rounded-xl mb-6 w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors flex items-center gap-1.5 ${
-              activeTab === tab.key
-                ? "bg-surface text-text shadow-sm"
-                : "text-text-secondary hover:text-text"
-            }`}
-          >
-            {tab.label}
-            <span
-              className={`text-xs font-bold rounded-full px-1.5 py-0.5 leading-none ${
-                activeTab === tab.key
-                  ? "bg-primary-100 text-primary-700"
-                  : "bg-border text-text-tertiary"
-              }`}
-            >
-              {countFor(tab.key)}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Patients list */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-bg-subtle flex items-center justify-center mb-4">
-            <Users size={28} className="text-text-tertiary" />
-          </div>
-          <p className="text-base font-body font-medium text-text-secondary">
-            Nessun paziente in questa categoria
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {filtered.map((patient) => (
-            <PatientCard key={patient.id} patient={patient} />
+      {loading ? (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="animate-pulse bg-bg-subtle rounded-2xl h-20" />
           ))}
         </div>
+      ) : !error && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { label: "Attivi", value: activeCount, color: "text-primary-600", bg: "bg-primary-50" },
+            { label: "In pausa", value: pausedCount, color: "text-warning", bg: "bg-accent-50" },
+            { label: "Completati", value: completedCount, color: "text-text-secondary", bg: "bg-bg-subtle" },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl p-4 ${s.bg} text-center`}>
+              <p className={`text-2xl font-heading font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-xs font-body text-text-secondary mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter tabs */}
+      {!loading && !error && (
+        <div className="flex gap-1 p-1 bg-bg-subtle rounded-xl mb-6 w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-body font-medium transition-colors flex items-center gap-1.5 ${
+                activeTab === tab.key
+                  ? "bg-surface text-text shadow-sm"
+                  : "text-text-secondary hover:text-text"
+              }`}
+            >
+              {tab.label}
+              <span
+                className={`text-xs font-bold rounded-full px-1.5 py-0.5 leading-none ${
+                  activeTab === tab.key
+                    ? "bg-primary-100 text-primary-700"
+                    : "bg-border text-text-tertiary"
+                }`}
+              >
+                {countFor(tab.key)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="flex flex-col gap-4">
+          <PatientCardSkeleton />
+          <PatientCardSkeleton />
+          <PatientCardSkeleton />
+        </div>
+      )}
+
+      {/* Patients list */}
+      {!loading && !error && (
+        filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-bg-subtle flex items-center justify-center mb-4">
+              <Users size={28} className="text-text-tertiary" />
+            </div>
+            <p className="text-base font-body font-medium text-text-secondary">
+              {activeTab === "tutti"
+                ? "Nessun paziente ancora. I tuoi pazienti appariranno qui non appena avvii un percorso!"
+                : "Nessun paziente in questa categoria"}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {filtered.map((patient) => (
+              <PatientCard key={patient.id} patient={patient} />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

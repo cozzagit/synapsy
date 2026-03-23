@@ -949,6 +949,7 @@ export default function PsychologistRegisterPage() {
 
     form1.setSubmitting(true);
     try {
+      // Step 1: Create auth account
       const result = await signUp.email({
         name: form1.values.name.trim(),
         email: form1.values.email.trim(),
@@ -968,6 +969,65 @@ export default function PsychologistRegisterPage() {
           );
         }
         return;
+      }
+
+      // Step 2: Create psychologist profile
+      const areaMap: Record<string, string> = {
+        "Ansia": "anxiety", "Depressione": "depression", "Stress": "stress",
+        "Burnout": "burnout", "Relazioni": "relationship", "Famiglia": "family",
+        "Lutto": "grief", "Trauma": "trauma", "Autostima": "self_esteem",
+        "Disturbi alimentari": "eating_disorders", "Dipendenze": "addiction",
+        "Sonno": "sleep", "Rabbia": "anger", "Fobie": "phobias", "DOC": "ocd",
+        "Sessualità": "sexuality", "Identità": "identity", "Lavoro": "work_issues",
+        "Studio": "academic_issues", "Genitorialità": "parenting",
+        "Ansia sociale": "social_anxiety", "Attacchi di panico": "panic_attacks",
+        "Transizioni di vita": "life_transitions", "Malattia cronica": "chronic_illness",
+      };
+      const approachMap: Record<string, string> = {
+        "CBT": "cbt", "Psicodinamico": "psychodynamic", "Sistemico": "systemic",
+        "Umanistico": "humanistic", "Gestalt": "gestalt", "EMDR": "emdr",
+        "ACT": "act", "DBT": "dbt", "Mindfulness": "mindfulness",
+        "Psicoanalitico": "psychoanalytic", "Integrativo": "integrative",
+        "Breve strategico": "solution_focused", "Narrativo": "narrative",
+        "Arteterapia": "art_therapy",
+      };
+      const modalityMap: Record<string, string> = {
+        "Online": "online", "In studio": "in_person", "Entrambi": "both",
+      };
+
+      try {
+        await fetch("/api/psychologist/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            alboNumber: form1.values.numeroAlbo.trim(),
+            alboRegion: form1.values.regioneAlbo,
+            treatedAreas: form2.values.areeTrattate.map((a: string) => areaMap[a] || a.toLowerCase()),
+            therapeuticApproaches: form2.values.approcci.map((a: string) => approachMap[a] || a.toLowerCase()),
+            modality: form2.values.modalita === "online" ? "online" : form2.values.modalita === "studio" ? "in_person" : "both",
+            shortBio: form3.values.bioBreve.trim(),
+            bio: form3.values.bioCompleta.trim(),
+            maxNewPatientsPerWeek: parseInt(form3.values.maxNuoviPazienti, 10) || 5,
+          }),
+        });
+      } catch {
+        // Profile creation failed — user can complete it later in dashboard
+      }
+
+      // Step 3: Send welcome notification
+      try {
+        await fetch("/api/auth/hooks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: result.data?.user?.id,
+            role: "psychologist",
+            email: form1.values.email.trim(),
+            name: form1.values.name.trim(),
+          }),
+        });
+      } catch {
+        // Non-critical
       }
 
       router.push("/dashboard");
