@@ -23,7 +23,7 @@ const benefits = [
     icon: TrendingUp,
     title: "Crescita meritocratica",
     description:
-      "Il tuo ranking migliora con la qualit\u00e0 del tuo lavoro, non con il budget marketing.",
+      "Il tuo ranking migliora con la qualità del tuo lavoro, non con il budget marketing.",
   },
   {
     icon: Share2,
@@ -33,9 +33,9 @@ const benefits = [
   },
   {
     icon: Award,
-    title: "Badge di qualit\u00e0",
+    title: "Badge di qualità",
     description:
-      "Conquista badge basati su continuit\u00e0 terapeutica, affidabilit\u00e0 e contributo alla rete.",
+      "Conquista badge basati su continuità terapeutica, affidabilità e contributo alla rete.",
   },
   {
     icon: BarChart3,
@@ -47,7 +47,7 @@ const benefits = [
     icon: Coins,
     title: "Costi trasparenti",
     description:
-      "Solo 10\u20ac per selezione e 60\u20ac per continuit\u00e0 confermata. Nessun abbonamento.",
+      "Solo 10€ per selezione e 60€ per continuità confermata. Nessun abbonamento.",
   },
 ];
 
@@ -73,9 +73,9 @@ export function ForPsychologistsSection() {
             Fai crescere la tua pratica con il merito
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-text-secondary">
-            Niente pi&ugrave; marketing individuale. Ricevi pazienti compatibili,
+            Niente più marketing individuale. Ricevi pazienti compatibili,
             costruisci la tua reputazione, fai parte di una rete che premia la
-            qualit&agrave;.
+            qualità.
           </p>
         </motion.div>
 

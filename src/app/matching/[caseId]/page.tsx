@@ -89,7 +89,7 @@ export default function MatchingResultsPage() {
           Stiamo cercando i professionisti migliori
         </h2>
         <p className="mt-2 text-text-secondary">
-          Analisi della compatibilit&agrave; in corso...
+          Analisi della compatibilità in corso...
         </p>
         <Loader2 className="mt-4 h-5 w-5 animate-spin text-primary-500" />
       </div>
@@ -105,7 +105,7 @@ export default function MatchingResultsPage() {
             <AlertCircle className="h-8 w-8 text-error" />
           </div>
           <h2 className="font-heading text-xl font-bold text-text">
-            Si &egrave; verificato un errore
+            Si è verificato un errore
           </h2>
           <p className="mt-2 text-text-secondary">{error}</p>
           <Link
@@ -140,8 +140,8 @@ export default function MatchingResultsPage() {
           </h2>
           <p className="mt-3 text-text-secondary">
             Al momento non abbiamo trovato professionisti con alta
-            compatibilit&agrave; per le tue esigenze. Ti avviseremo non appena ci
-            saranno nuove disponibilit&agrave;.
+            compatibilità per le tue esigenze. Ti avviseremo non appena ci
+            saranno nuove disponibilità.
           </p>
           <Link
             href="/"
@@ -169,7 +169,7 @@ export default function MatchingResultsPage() {
           className="mb-8 text-center"
         >
           <h1 className="font-heading text-2xl font-bold text-text sm:text-3xl">
-            I professionisti pi&ugrave; adatti a te
+            I professionisti più adatti a te
           </h1>
           <p className="mt-2 text-text-secondary">
             Abbiamo analizzato {data?.stats.totalEvaluated ?? 0} professionisti.

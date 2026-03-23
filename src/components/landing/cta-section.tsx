@@ -25,11 +25,11 @@ export function CtaSection() {
             </div>
 
             <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
-              Il primo passo &egrave; il pi&ugrave; importante
+              Il primo passo è il più importante
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl font-accent text-lg italic text-white/80">
-              &ldquo;Porta persone, il sistema le trasforma nei pazienti giusti.&rdquo;
+              “Porta persone, il sistema le trasforma nei pazienti giusti.”
             </p>
 
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

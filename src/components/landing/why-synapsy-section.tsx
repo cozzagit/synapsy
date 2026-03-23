@@ -8,14 +8,14 @@ const reasons = [
     icon: ShieldCheck,
     title: "Professionisti verificati",
     description:
-      "Ogni psicologo \u00e8 iscritto all'Albo e verificato dal nostro team. Nessun profilo non qualificato.",
+      "Ogni psicologo è iscritto all'Albo e verificato dal nostro team. Nessun profilo non qualificato.",
     color: "bg-primary-50 text-primary-600",
   },
   {
     icon: Sparkles,
     title: "Matching intelligente",
     description:
-      "Non scegli da una lista infinita. Il sistema analizza le tue esigenze e ti propone i professionisti pi\u00f9 adatti.",
+      "Non scegli da una lista infinita. Il sistema analizza le tue esigenze e ti propone i professionisti più adatti.",
     color: "bg-secondary-50 text-secondary-600",
   },
   {
@@ -29,21 +29,21 @@ const reasons = [
     icon: Clock,
     title: "Call gratuita",
     description:
-      "La prima chiamata conoscitiva \u00e8 sempre gratuita. Conosci il professionista senza impegno.",
+      "La prima chiamata conoscitiva è sempre gratuita. Conosci il professionista senza impegno.",
     color: "bg-primary-50 text-primary-600",
   },
   {
     icon: Eye,
-    title: "Qualit\u00e0 trasparente",
+    title: "Qualità trasparente",
     description:
-      "Ogni professionista ha un punteggio di qualit\u00e0 basato sulla continuit\u00e0 reale dei suoi pazienti.",
+      "Ogni professionista ha un punteggio di qualità basato sulla continuità reale dei suoi pazienti.",
     color: "bg-secondary-50 text-secondary-600",
   },
   {
     icon: Heart,
     title: "Nessun costo per te",
     description:
-      "Il servizio di matching \u00e8 completamente gratuito per chi cerca supporto. Sempre.",
+      "Il servizio di matching è completamente gratuito per chi cerca supporto. Sempre.",
     color: "bg-accent-50 text-accent-600",
   },
 ];
@@ -63,7 +63,7 @@ export function WhySynapsySection() {
           className="text-center"
         >
           <h2 className="font-heading text-3xl font-bold text-text sm:text-4xl">
-            Perch\u00e9 scegliere Synapsy
+            Perché scegliere Synapsy
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-text-secondary">
             Crediamo che trovare il professionista giusto non debba essere

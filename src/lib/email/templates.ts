@@ -7,8 +7,8 @@ const CRISIS_FOOTER = `
     <td style="padding: 12px 0 0 0; border-top: 1px solid #E8E5DF;">
       <p style="margin: 0; font-size: 12px; color: #9C9890; line-height: 1.6;">
         <strong style="color: #C4645A;">Supporto crisi 24/7:</strong>
-        Telefono Amico <a href="tel:02-2327-2327" style="color: #5B8A72;">02-2327-2327</a> &nbsp;|&nbsp;
-        Telefono Azzurro <a href="tel:19696" style="color: #5B8A72;">19696</a> &nbsp;|&nbsp;
+        Telefono Amico <a href="tel:02-2327-2327" style="color: #5B8A72;">02-2327-2327</a>  | 
+        Telefono Azzurro <a href="tel:19696" style="color: #5B8A72;">19696</a>  | 
         Emergenza <a href="tel:118" style="color: #5B8A72;">118</a>
       </p>
     </td>
@@ -62,7 +62,7 @@ function baseLayout(content: string, includecrisis = false): string {
                     <p style="margin: 0; font-size: 12px; color: #9C9890; line-height: 1.7;">
                       Synapsy — La connessione giusta, al momento giusto<br />
                       <a href="${APP_URL}/impostazioni/notifiche" style="color: #9C9890; text-decoration: underline;">Gestisci preferenze email</a>
-                      &nbsp;·&nbsp;
+                       · 
                       <a href="${APP_URL}/impostazioni/notifiche?unsubscribe=1" style="color: #9C9890; text-decoration: underline;">Annulla iscrizione</a>
                     </p>
                   </td>

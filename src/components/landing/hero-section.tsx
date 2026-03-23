@@ -35,7 +35,7 @@ export function HeroSection() {
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-text-secondary">
               Non scegli tra centinaia di profili. Il nostro sistema intelligente
               analizza le tue esigenze e ti propone i professionisti{" "}
-              <strong className="text-text">pi&ugrave; compatibili</strong> con il
+              <strong className="text-text">più compatibili</strong> con il
               tuo percorso.
             </p>
 
@@ -78,7 +78,7 @@ export function HeroSection() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <span className="text-sm text-text-secondary">
-                  Qualit&agrave; meritocratica
+                  Qualità meritocratica
                 </span>
               </div>
             </div>

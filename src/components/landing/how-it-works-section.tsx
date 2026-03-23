@@ -22,7 +22,7 @@ const steps = [
     icon: Brain,
     title: "Il sistema trova i match",
     description:
-      "L'algoritmo analizza compatibilit\u00e0, specializzazione e qualit\u00e0 per proporti i professionisti migliori.",
+      "L'algoritmo analizza compatibilità, specializzazione e qualità per proporti i professionisti migliori.",
     color: "bg-secondary-50 text-secondary-600",
     accent: "from-secondary-400 to-secondary-600",
   },
@@ -30,7 +30,7 @@ const steps = [
     icon: UserCheck,
     title: "Scegli il tuo psicologo",
     description:
-      "Visualizza i profili compatibili con punteggio di matching, badge di qualit\u00e0 e specializzazioni.",
+      "Visualizza i profili compatibili con punteggio di matching, badge di qualità e specializzazioni.",
     color: "bg-accent-50 text-accent-600",
     accent: "from-accent-400 to-accent-600",
   },
@@ -46,7 +46,7 @@ const steps = [
     icon: Sparkles,
     title: "Inizia il percorso",
     description:
-      "Se c'\u00e8 feeling, continui con il tuo professionista. Il sistema impara e migliora per tutti.",
+      "Se c'è feeling, continui con il tuo professionista. Il sistema impara e migliora per tutti.",
     color: "bg-secondary-50 text-secondary-600",
     accent: "from-secondary-400 to-secondary-600",
   },

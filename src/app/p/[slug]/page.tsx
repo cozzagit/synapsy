@@ -323,7 +323,7 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
               Dr. {profile.userName}
             </h1>
             <p className="text-sm font-body text-text-secondary mb-1">
-              Psicologo — Albo n.&nbsp;{profile.alboNumber} ({profile.alboRegion})
+              Psicologo — Albo n. {profile.alboNumber} ({profile.alboRegion})
             </p>
             {profile.shortBio && (
               <p className="mt-4 text-base font-body text-text-secondary leading-relaxed max-w-2xl">

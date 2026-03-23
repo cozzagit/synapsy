@@ -32,7 +32,7 @@ export function Navbar() {
             href="#perche-synapsy"
             className="text-sm text-text-secondary transition-colors hover:text-primary-600"
           >
-            Perch&eacute; Synapsy
+            Perché Synapsy
           </Link>
           <Link
             href="/login"
@@ -75,7 +75,7 @@ export function Navbar() {
               className="rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-subtle"
               onClick={() => setIsOpen(false)}
             >
-              Perch&eacute; Synapsy
+              Perché Synapsy
             </Link>
             <Link
               href="/login"

@@ -323,11 +323,11 @@ export function explainScore(breakdown: ScoreBreakdown): string[] {
   }
 
   if (breakdown.availabilityAlignment >= 0.7) {
-    explanations.push("Ampia disponibilit\u00e0 per nuovi pazienti");
+    explanations.push("Ampia disponibilità per nuovi pazienti");
   }
 
   if (breakdown.rankingBonus >= 0.7) {
-    explanations.push("Alto tasso di continuit\u00e0 terapeutica");
+    explanations.push("Alto tasso di continuità terapeutica");
   }
 
   if (breakdown.responseTimeBonus >= 0.8) {

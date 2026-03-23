@@ -50,11 +50,11 @@ const areaLabels: Record<string, string> = {
   anger: "Rabbia",
   phobias: "Fobie",
   ocd: "DOC",
-  sexuality: "Sessualit\u00e0",
-  identity: "Identit\u00e0",
+  sexuality: "Sessualità",
+  identity: "Identità",
   work_issues: "Lavoro",
   academic_issues: "Studio",
-  parenting: "Genitorialit\u00e0",
+  parenting: "Genitorialità",
   social_anxiety: "Ansia sociale",
   panic_attacks: "Attacchi di panico",
   life_transitions: "Transizioni",
@@ -176,7 +176,7 @@ export function PsychologistCard({
           {continuityRate > 0.7 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
               <Award className="h-3 w-3" />
-              Alta continuit&agrave;
+              Alta continuità
             </span>
           )}
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary-50 px-3 py-1 text-xs font-medium text-secondary-700">
@@ -186,7 +186,7 @@ export function PsychologistCard({
           {continuityRate > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-bg-subtle px-3 py-1 text-xs font-medium text-text-secondary">
               <Clock className="h-3 w-3" />
-              {Math.round(continuityRate * 100)}% continuit&agrave;
+              {Math.round(continuityRate * 100)}% continuità
             </span>
           )}
         </div>
@@ -232,7 +232,7 @@ export function PsychologistCard({
           onClick={() => setExpanded(!expanded)}
           className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-text-secondary transition-colors hover:text-primary-600"
         >
-          {expanded ? "Meno dettagli" : "Pi\u00f9 dettagli"}
+          {expanded ? "Meno dettagli" : "Più dettagli"}
           {expanded ? (
             <ChevronUp className="h-3.5 w-3.5" />
           ) : (

@@ -22,13 +22,13 @@ const benefits = [
     icon: Users,
     title: "Pazienti compatibili",
     description:
-      "Ricevi solo casi in linea con le tue specializzazioni e il tuo approccio terapeutico. Niente pi\u00f9 pazienti fuori target.",
+      "Ricevi solo casi in linea con le tue specializzazioni e il tuo approccio terapeutico. Niente più pazienti fuori target.",
   },
   {
     icon: TrendingUp,
     title: "Crescita meritocratica",
     description:
-      "Il tuo ranking migliora con la qualit\u00e0 del tuo lavoro, non con il budget marketing. La qualit\u00e0 viene premiata.",
+      "Il tuo ranking migliora con la qualità del tuo lavoro, non con il budget marketing. La qualità viene premiata.",
   },
   {
     icon: Share2,
@@ -38,9 +38,9 @@ const benefits = [
   },
   {
     icon: Award,
-    title: "Badge di qualit\u00e0",
+    title: "Badge di qualità",
     description:
-      "Conquista badge basati su continuit\u00e0 terapeutica, affidabilit\u00e0 e contributo alla rete. Visibili ai pazienti.",
+      "Conquista badge basati su continuità terapeutica, affidabilità e contributo alla rete. Visibili ai pazienti.",
   },
   {
     icon: BarChart3,
@@ -52,7 +52,7 @@ const benefits = [
     icon: Coins,
     title: "Costi trasparenti",
     description:
-      "Solo 10\u20ac per selezione e 60\u20ac per continuit\u00e0 confermata. Nessun abbonamento, nessun costo fisso.",
+      "Solo 10€ per selezione e 60€ per continuità confermata. Nessun abbonamento, nessun costo fisso.",
   },
 ];
 
@@ -61,13 +61,13 @@ const steps = [
     number: "01",
     title: "Registrati e completa il profilo",
     description:
-      "Inserisci le tue specializzazioni, approccio terapeutico, disponibilit\u00e0 e una breve bio. Verifica le credenziali dell'Albo.",
+      "Inserisci le tue specializzazioni, approccio terapeutico, disponibilità e una breve bio. Verifica le credenziali dell'Albo.",
   },
   {
     number: "02",
     title: "Ricevi casi compatibili",
     description:
-      "Il sistema ti invia automaticamente casi anonimi compatibili con il tuo profilo. Vedi attributi chiave e score di compatibilit\u00e0.",
+      "Il sistema ti invia automaticamente casi anonimi compatibili con il tuo profilo. Vedi attributi chiave e score di compatibilità.",
   },
   {
     number: "03",
@@ -142,9 +142,9 @@ export default function ProfessionistiPage() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary">
-                Niente pi&ugrave; marketing individuale. Ricevi pazienti
+                Niente più marketing individuale. Ricevi pazienti
                 compatibili con le tue specializzazioni, costruisci la tua
-                reputazione e fai parte di una rete che premia la qualit&agrave;.
+                reputazione e fai parte di una rete che premia la qualità.
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -172,8 +172,8 @@ export default function ProfessionistiPage() {
               className="mx-auto mt-16 grid max-w-lg grid-cols-3 gap-8"
             >
               {[
-                { value: "0\u20ac", label: "Costo fisso mensile" },
-                { value: "10\u20ac", label: "Fee per selezione" },
+                { value: "0€", label: "Costo fisso mensile" },
+                { value: "10€", label: "Fee per selezione" },
                 { value: "100%", label: "Meritocratico" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
@@ -280,7 +280,7 @@ export default function ProfessionistiPage() {
                 Il tuo percorso di crescita
               </h2>
               <p className="mt-4 text-text-secondary">
-                Pi\u00f9 aiuti, pi\u00f9 cresci. Il sistema premia la qualit\u00e0 nel tempo.
+                Più aiuti, più cresci. Il sistema premia la qualità nel tempo.
               </p>
             </motion.div>
 
@@ -318,7 +318,7 @@ export default function ProfessionistiPage() {
             </div>
 
             <div className="mt-8 text-sm text-text-tertiary">
-              Avanzamento basato su <strong>tempo + qualit\u00e0</strong>. Ogni
+              Avanzamento basato su <strong>tempo + qualità</strong>. Ogni
               stadio sblocca benefici aggiuntivi.
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function ProfessionistiPage() {
                 Unisciti alla rete Synapsy
               </h2>
               <p className="mx-auto mt-3 max-w-lg font-accent text-lg italic text-white/80">
-                &ldquo;Porta persone, il sistema le trasforma nei pazienti giusti.&rdquo;
+                “Porta persone, il sistema le trasforma nei pazienti giusti.”
               </p>
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <Link

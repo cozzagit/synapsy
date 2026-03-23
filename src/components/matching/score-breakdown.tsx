@@ -10,16 +10,16 @@ interface ScoreBreakdownViewProps {
 const dimensions = [
   { key: "problemAreaOverlap", label: "Specializzazione", color: "bg-primary-400" },
   { key: "approachCompatibility", label: "Approccio terapeutico", color: "bg-secondary-400" },
-  { key: "availabilityAlignment", label: "Disponibilit\u00e0", color: "bg-accent-400" },
+  { key: "availabilityAlignment", label: "Disponibilità", color: "bg-accent-400" },
   { key: "rankingBonus", label: "Reputazione", color: "bg-primary-300" },
-  { key: "responseTimeBonus", label: "Reattivit\u00e0", color: "bg-secondary-300" },
+  { key: "responseTimeBonus", label: "Reattività", color: "bg-secondary-300" },
 ] as const;
 
 export function ScoreBreakdownView({ breakdown }: ScoreBreakdownViewProps) {
   return (
     <div className="space-y-3">
       <h4 className="font-heading text-sm font-semibold text-text">
-        Dettaglio compatibilit&agrave;
+        Dettaglio compatibilità
       </h4>
       {dimensions.map((dim, index) => {
         const value = breakdown[dim.key as keyof ScoreBreakdown] as number;
