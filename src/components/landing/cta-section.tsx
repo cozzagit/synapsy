@@ -34,17 +34,11 @@ export function CtaSection() {
 
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
-                href="/register"
+                href="/questionnaire"
                 className="group inline-flex h-12 items-center gap-2 rounded-xl bg-white px-8 text-base font-semibold text-primary-700 shadow-lg transition-all hover:bg-white/90 hover:shadow-xl active:scale-[0.98]"
               >
-                Trova il tuo psicologo
+                Inizia il questionario
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/register/psychologist"
-                className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/30 px-8 text-base font-semibold text-white transition-all hover:bg-white/10 active:scale-[0.98]"
-              >
-                Sei uno psicologo?
               </Link>
             </div>
 

@@ -3,9 +3,9 @@ import { Footer } from "@/components/layout";
 import {
   HeroSection,
   HowItWorksSection,
-  ForPsychologistsSection,
   CtaSection,
 } from "@/components/landing";
+import { WhySynapsySection } from "@/components/landing/why-synapsy-section";
 
 export default function HomePage() {
   return (
@@ -14,7 +14,7 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <HowItWorksSection />
-        <ForPsychologistsSection />
+        <WhySynapsySection />
         <CtaSection />
       </main>
       <Footer />

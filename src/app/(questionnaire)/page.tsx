@@ -407,10 +407,11 @@ function QuestionnaireInner({ referralId }: QuestionnaireInnerProps) {
     }
     // Navigate to matching results after a brief animated delay
     setTimeout(() => {
-      const params = new URLSearchParams();
-      if (caseId) params.set("case", caseId);
-      if (referralId) params.set("ref", referralId);
-      window.location.href = `/matching${params.toString() ? `?${params.toString()}` : ""}`;
+      if (caseId) {
+        window.location.href = `/matching/${caseId}`;
+      } else {
+        window.location.href = "/";
+      }
     }, 2400);
   }
 

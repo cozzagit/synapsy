@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { cases, psychologistProfiles, penalties } from "@/lib/db/schema";
 import { eq, and, isNull, lte, gte, or } from "drizzle-orm";
 import { runMatchingEngine, explainScore } from "@/lib/matching";
-import { getServerSession } from "@/lib/auth/session";
 import type { PsychologistCandidate, UserMatchingInput } from "@/lib/matching";
 
 export async function GET(
@@ -11,18 +10,9 @@ export async function GET(
   { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
-    const session = await getServerSession();
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: { code: "UNAUTHORIZED", message: "Non autenticato" } },
-        { status: 401 }
-      );
-    }
-
+    // Matching results can be viewed without login (anonymous flow)
     const { caseId } = await params;
 
-    // Fetch the case and verify it belongs to the authenticated user
     const caseResult = await db.query.cases.findFirst({
       where: eq(cases.id, caseId),
     });
@@ -31,14 +21,6 @@ export async function GET(
       return NextResponse.json(
         { error: { code: "NOT_FOUND", message: "Caso non trovato" } },
         { status: 404 }
-      );
-    }
-
-    const userRole = (session.user as { role?: string }).role;
-    if (caseResult.userId !== session.user.id && userRole !== "admin") {
-      return NextResponse.json(
-        { error: { code: "FORBIDDEN", message: "Non hai accesso a questo caso" } },
-        { status: 403 }
       );
     }
 

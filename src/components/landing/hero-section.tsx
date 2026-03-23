@@ -41,17 +41,17 @@ export function HeroSection() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Link
-                href="/register"
+                href="/questionnaire"
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 text-base font-semibold text-white shadow-md transition-all hover:bg-primary-600 hover:shadow-lg active:scale-[0.98]"
               >
-                Inizia il questionario
+                Trova il tuo psicologo
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
-                href="/register/psychologist"
+                href="#come-funziona"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-6 text-base font-semibold text-text shadow-sm transition-all hover:bg-surface-hover hover:shadow-md active:scale-[0.98]"
               >
-                Sei uno psicologo?
+                Come funziona
               </Link>
             </div>
 

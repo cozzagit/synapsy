@@ -54,26 +54,18 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Per psicologi */}
+          {/* Per professionisti */}
           <div>
             <h3 className="font-heading text-sm font-semibold text-text">
-              Per psicologi
+              Per professionisti
             </h3>
             <ul className="mt-3 space-y-2">
               <li>
                 <Link
-                  href="/register/psychologist"
+                  href="/professionisti"
                   className="text-sm text-text-secondary transition-colors hover:text-primary-600"
                 >
-                  Registrati
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#vantaggi"
-                  className="text-sm text-text-secondary transition-colors hover:text-primary-600"
-                >
-                  Vantaggi della rete
+                  Area professionisti
                 </Link>
               </li>
               <li>
@@ -81,7 +73,7 @@ export function Footer() {
                   href="#come-funziona-psicologi"
                   className="text-sm text-text-secondary transition-colors hover:text-primary-600"
                 >
-                  Come funziona
+                  Entra nella rete
                 </Link>
               </li>
             </ul>

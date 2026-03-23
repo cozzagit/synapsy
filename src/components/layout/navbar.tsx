@@ -20,7 +20,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav — SOLO per utenti/pazienti */}
         <div className="hidden items-center gap-8 md:flex">
           <Link
             href="#come-funziona"
@@ -29,10 +29,10 @@ export function Navbar() {
             Come funziona
           </Link>
           <Link
-            href="#per-psicologi"
+            href="#perche-synapsy"
             className="text-sm text-text-secondary transition-colors hover:text-primary-600"
           >
-            Per psicologi
+            Perch&eacute; Synapsy
           </Link>
           <Link
             href="/login"
@@ -41,10 +41,10 @@ export function Navbar() {
             Accedi
           </Link>
           <Link
-            href="/register"
+            href="/questionnaire"
             className="inline-flex h-10 items-center rounded-xl bg-primary-500 px-5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-600 hover:shadow-md active:scale-[0.98]"
           >
-            Inizia ora
+            Trova il tuo psicologo
           </Link>
         </div>
 
@@ -71,11 +71,11 @@ export function Navbar() {
               Come funziona
             </Link>
             <Link
-              href="#per-psicologi"
+              href="#perche-synapsy"
               className="rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-subtle"
               onClick={() => setIsOpen(false)}
             >
-              Per psicologi
+              Perch&eacute; Synapsy
             </Link>
             <Link
               href="/login"
@@ -85,11 +85,11 @@ export function Navbar() {
               Accedi
             </Link>
             <Link
-              href="/register"
+              href="/questionnaire"
               className="mt-1 inline-flex h-10 items-center justify-center rounded-xl bg-primary-500 px-5 text-sm font-medium text-white shadow-sm"
               onClick={() => setIsOpen(false)}
             >
-              Inizia ora
+              Trova il tuo psicologo
             </Link>
           </div>
         </div>

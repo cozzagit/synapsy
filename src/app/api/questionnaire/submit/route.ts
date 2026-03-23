@@ -6,14 +6,8 @@ import type { QuestionnaireResponse } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
+    // Questionnaire can be filled without login (user is anonymous until match selection)
     const session = await getServerSession();
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: { code: "UNAUTHORIZED", message: "Devi effettuare il login per continuare" } },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
     const {
@@ -65,7 +59,7 @@ export async function POST(request: NextRequest) {
     const [newCase] = await db
       .insert(cases)
       .values({
-        userId: session.user.id,
+        userId: session?.user?.id ?? "00000000-0000-0000-0000-000000000000",
         status: "pending",
         questionnaireData: responses as unknown as Record<string, unknown>,
         primaryProblem: responses.primaryProblems[0],
